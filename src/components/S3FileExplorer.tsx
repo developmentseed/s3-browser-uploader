@@ -20,6 +20,19 @@ interface UploadProgress {
   error?: string;
 }
 
+// New unified interface for display
+interface FileItem {
+  key: string;
+  name: string;
+  lastModified: string;
+  size: number;
+  isDirectory: boolean;
+  isUpload: boolean;
+  uploadStatus?: 'uploading' | 'completed' | 'error';
+  uploadProgress?: number;
+  uploadError?: string;
+}
+
 interface S3FileExplorerProps {
   className?: string;
   onFileUpload?: (files: File[]) => void;
@@ -171,14 +184,46 @@ export default function S3FileExplorer({
     return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
   };
 
-  const formatDate = (dateString: string): string => {
-    return new Date(dateString).toLocaleDateString("en-US", {
+  const formatDate = (
+    dateString: string
+  ): { relative: string; absolute: string } => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInMs = now.getTime() - date.getTime();
+    const diffInSeconds = Math.floor(diffInMs / 1000);
+    const diffInMinutes = Math.floor(diffInSeconds / 60);
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    const diffInDays = Math.floor(diffInHours / 24);
+    const diffInWeeks = Math.floor(diffInDays / 7);
+    const diffInMonths = Math.floor(diffInDays / 30);
+    const diffInYears = Math.floor(diffInDays / 365);
+
+    let relative = "";
+    if (diffInSeconds < 60) {
+      relative = "Just now";
+    } else if (diffInMinutes < 60) {
+      relative = `${diffInMinutes} minute${diffInMinutes === 1 ? "" : "s"} ago`;
+    } else if (diffInHours < 24) {
+      relative = `${diffInHours} hour${diffInHours === 1 ? "" : "s"} ago`;
+    } else if (diffInDays < 7) {
+      relative = `${diffInDays} day${diffInDays === 1 ? "" : "s"} ago`;
+    } else if (diffInWeeks < 4) {
+      relative = `${diffInWeeks} week${diffInWeeks === 1 ? "" : "s"} ago`;
+    } else if (diffInMonths < 12) {
+      relative = `${diffInMonths} month${diffInMonths === 1 ? "" : "s"} ago`;
+    } else {
+      relative = `${diffInYears} year${diffInYears === 1 ? "" : "s"} ago`;
+    }
+
+    const absolute = date.toLocaleDateString("en-US", {
       year: "numeric",
       month: "short",
       day: "numeric",
       hour: "2-digit",
       minute: "2-digit",
     });
+
+    return { relative, absolute };
   };
 
   const getDisplayName = (key: string): string => {
@@ -188,6 +233,68 @@ export default function S3FileExplorer({
 
   const getUploadProgress = (fileName: string): UploadProgress | undefined => {
     return uploadProgress.find((up) => up.file.name === fileName);
+  };
+
+  // Create unified file list combining S3 objects and uploads
+  const getUnifiedFileList = (): FileItem[] => {
+    const fileItems: FileItem[] = [];
+
+    // Add S3 objects
+    objects.forEach((obj) => {
+      fileItems.push({
+        key: obj.key,
+        name: getDisplayName(obj.key),
+        lastModified: obj.lastModified,
+        size: obj.size,
+        isDirectory: obj.isDirectory,
+        isUpload: false,
+      });
+    });
+
+    // Add uploads
+    uploadProgress.forEach((upload) => {
+      const uploadKey = upload.key;
+      const uploadName = getDisplayName(uploadKey);
+
+      // Check if this upload has a corresponding S3 object (completed upload)
+      const existingS3Object = objects.find((obj) => obj.key === uploadKey);
+
+      if (existingS3Object) {
+        // Upload completed, show as regular file with recent timestamp
+        fileItems.push({
+          key: uploadKey,
+          name: uploadName,
+          lastModified: new Date().toISOString(), // Very recent timestamp
+          size: upload.totalBytes,
+          isDirectory: false,
+          isUpload: false, // No longer an upload
+        });
+      } else {
+        // Still uploading or failed
+        fileItems.push({
+          key: uploadKey,
+          name: uploadName,
+          lastModified: new Date().toISOString(),
+          size: upload.totalBytes,
+          isDirectory: false,
+          isUpload: true,
+          uploadStatus: upload.status,
+          uploadProgress:
+            upload.status === "uploading"
+              ? (upload.uploadedBytes / upload.totalBytes) * 100
+              : undefined,
+          uploadError: upload.error,
+        });
+      }
+    });
+
+    // Sort alphabetically, directories first
+    return fileItems.sort((a, b) => {
+      if (a.isDirectory !== b.isDirectory) {
+        return a.isDirectory ? -1 : 1;
+      }
+      return a.name.localeCompare(b.name);
+    });
   };
 
   if (!credentials || !username || !bucket) {
@@ -281,177 +388,130 @@ export default function S3FileExplorer({
         </div>
       )}
 
-      {/* Error State */}
+      {/* Error Display */}
       {error && (
-        <div className="bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
-          <div className="text-red-800 dark:text-red-200 text-sm">{error}</div>
+        <div className="p-3 text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 rounded-lg">
+          {error}
         </div>
       )}
 
       {/* File List */}
-      {!loading && !error && (
-        <div className="space-y-2">
-          {objects.length === 0 && uploadProgress.length === 0 ? (
-            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-              This directory is empty
-            </div>
-          ) : (
-            <>
-              {/* Show uploading files first */}
-              {uploadProgress.map((upload) => (
-                <div
-                  key={`upload-${upload.file.name}`}
-                  className="flex items-center gap-3 p-3 rounded-lg border border-orange-200 dark:border-orange-800 bg-orange-50 dark:bg-orange-950/20"
-                >
-                  {/* Upload Icon */}
-                  <div className="flex-shrink-0">
-                    <svg
-                      className="w-5 h-5 text-orange-600 dark:text-orange-400"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  </div>
+      <div className="space-y-0.5">
+        {getUnifiedFileList().length === 0 ? (
+          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+            This directory is empty
+          </div>
+        ) : (
+          getUnifiedFileList().map((item) => (
+            <div
+              key={item.key}
+              className={`flex items-center gap-3 px-2 py-1.5 rounded transition-colors ${
+                item.isDirectory
+                  ? "hover:bg-blue-50 dark:hover:bg-blue-950/20 cursor-pointer"
+                  : item.isUpload && item.uploadStatus === 'uploading'
+                  ? "bg-orange-50 dark:bg-orange-950/20"
+                  : item.isUpload && item.uploadStatus === 'error'
+                  ? "bg-red-50 dark:bg-red-950/20"
+                  : "hover:bg-gray-50 dark:hover:bg-gray-900"
+              }`}
+              onClick={() => item.isDirectory && navigateToDirectory(item.key)}
+            >
+              {/* Icon */}
+              <div className="flex-shrink-0 w-5">
+                {item.isDirectory ? (
+                  <svg
+                    className="w-5 h-5 text-blue-600 dark:text-blue-400"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
+                  </svg>
+                ) : item.isUpload && item.uploadStatus === "uploading" ? (
+                  <svg
+                    className="w-5 h-5 text-orange-600 dark:text-orange-400"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                ) : item.isUpload && item.uploadStatus === "error" ? (
+                  <svg
+                    className="w-5 h-5 text-red-600 dark:text-red-400"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                ) : (
+                  <svg
+                    className="w-5 h-5 text-gray-600 dark:text-gray-400"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                )}
+              </div>
 
-                  {/* File Info */}
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                      {upload.file.name}
-                    </div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400">
-                      {upload.status === "uploading" && (
-                        <span className="text-orange-600 dark:text-orange-400">
-                          Uploading... {formatFileSize(upload.uploadedBytes)} /{" "}
-                          {formatFileSize(upload.totalBytes)}
-                        </span>
-                      )}
-                      {upload.status === "completed" && (
-                        <span className="text-green-600 dark:text-green-400">
-                          Upload completed
-                        </span>
-                      )}
-                      {upload.status === "error" && (
-                        <span className="text-red-600 dark:text-red-400">
-                          Upload failed: {upload.error}
-                        </span>
-                      )}
-                    </div>
-                  </div>
+              {/* File/Directory Info - Compact single line */}
+              <div className="flex-1 min-w-0 flex items-center gap-4 text-sm">
+                <div className="font-medium text-gray-900 dark:text-gray-100 truncate min-w-0 flex-1">
+                  {item.name}
+                </div>
+                
+                <div className="text-gray-500 dark:text-gray-400 flex-shrink-0">
+                  {item.isDirectory ? "Directory" : formatFileSize(item.size)}
+                </div>
 
-                  {/* Progress Bar */}
-                  {upload.status === "uploading" && (
-                    <div className="flex-shrink-0 w-24">
-                      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                        <div
-                          className="bg-orange-600 dark:bg-orange-400 h-2 rounded-full transition-all duration-300"
-                          style={{
-                            width: `${
-                              (upload.uploadedBytes / upload.totalBytes) * 100
-                            }%`,
-                          }}
-                        ></div>
-                      </div>
-                    </div>
+                <div className="text-gray-500 dark:text-gray-400 flex-shrink-0">
+                  {item.isUpload && item.uploadStatus === "uploading" ? (
+                    <span className="text-orange-600 dark:text-orange-400">
+                      {Math.round(item.uploadProgress || 0)}%
+                    </span>
+                  ) : item.isUpload && item.uploadStatus === "error" ? (
+                    <span className="text-red-600 dark:text-red-400">
+                      Failed
+                    </span>
+                  ) : (
+                    formatDate(item.lastModified).relative
                   )}
+                </div>
+              </div>
 
-                  {/* Status Icon */}
-                  <div className="flex-shrink-0">
-                    {upload.status === "uploading" && (
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-orange-600 dark:border-orange-400"></div>
-                    )}
-                    {upload.status === "completed" && (
-                      <svg
-                        className="w-4 h-4 text-green-600 dark:text-green-400"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
-                    )}
-                    {upload.status === "error" && (
-                      <svg
-                        className="w-4 h-4 text-red-600 dark:text-red-400"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
-                    )}
+              {/* Progress Bar for uploading files */}
+              {item.isUpload && item.uploadStatus === "uploading" && (
+                <div className="flex-shrink-0 w-20">
+                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
+                    <div
+                      className="bg-orange-600 dark:bg-orange-400 h-1.5 rounded-full transition-all duration-300"
+                      style={{ width: `${item.uploadProgress || 0}%` }}
+                    ></div>
                   </div>
                 </div>
-              ))}
+              )}
 
-              {/* Show existing S3 objects */}
-              {objects.map((obj) => (
-                <div
-                  key={obj.key}
-                  className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${
-                    obj.isDirectory
-                      ? "border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 cursor-pointer"
-                      : "border-gray-200 dark:border-gray-700 bg-white dark:bg-black hover:bg-gray-50 dark:hover:bg-gray-900"
-                  }`}
-                  onClick={() =>
-                    obj.isDirectory && navigateToDirectory(obj.key)
-                  }
-                >
-                  {/* Icon */}
-                  <div className="flex-shrink-0">
-                    {obj.isDirectory ? (
-                      <svg
-                        className="w-5 h-5 text-blue-600 dark:text-blue-400"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                      >
-                        <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
-                      </svg>
-                    ) : (
-                      <svg
-                        className="w-5 h-5 text-gray-600 dark:text-gray-400"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
-                    )}
-                  </div>
-
-                  {/* File/Directory Info */}
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                      {getDisplayName(obj.key)}
-                    </div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400">
-                      {obj.isDirectory ? "Directory" : formatFileSize(obj.size)}
-                    </div>
-                  </div>
-
-                  {/* Date */}
-                  <div className="flex-shrink-0 text-xs text-gray-500 dark:text-gray-400">
-                    {formatDate(obj.lastModified)}
-                  </div>
+              {/* Status indicator for uploading files */}
+              {item.isUpload && item.uploadStatus === "uploading" && (
+                <div className="flex-shrink-0">
+                  <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-orange-600 dark:border-orange-400"></div>
                 </div>
-              ))}
-            </>
-          )}
-        </div>
-      )}
+              )}
+            </div>
+          ))
+        )}
+      </div>
     </div>
   );
 }
