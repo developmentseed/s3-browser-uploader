@@ -1,3 +1,3 @@
 export { default as CredentialsForm } from "./CredentialsForm";
-export { default as FileDropZone } from "./FileDropZone";
-export { default as CustomFileDropExample } from "./CustomFileDropExample";
+export { default as DropZone } from "./DropZone";
+export { default as FileUploadSection } from "./FileUploadSection";

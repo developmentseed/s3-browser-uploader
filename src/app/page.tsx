@@ -1,34 +1,7 @@
 "use client";
 
-import { FileDropZone, CredentialsForm } from "@/components";
-import {
-  CredentialsProvider,
-  useCredentials,
-} from "@/contexts/CredentialsContext";
-
-function FileUploadSection() {
-  const { credentials } = useCredentials();
-
-  const handleFilesSelected = (files: File[]) => {
-    console.log("Selected files:", files);
-    // Here you would typically handle the file upload to S3 using the credentials
-    if (credentials) {
-      console.log("Using credentials:", credentials);
-      // TODO: Implement S3 upload logic with credentials
-    }
-    alert(
-      `Selected ${files.length} file(s): ${files.map((f) => f.name).join(", ")}`
-    );
-  };
-
-  return (
-    <FileDropZone
-      onFilesSelected={handleFilesSelected}
-      multiple={true}
-      className="mb-8"
-    />
-  );
-}
+import { CredentialsForm, FileUploadSection } from "@/components";
+import { CredentialsProvider } from "@/contexts/CredentialsContext";
 
 export default function Home() {
   return (
