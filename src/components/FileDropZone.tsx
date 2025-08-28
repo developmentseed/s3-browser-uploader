@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useRef, useCallback } from "react";
+import React from "react";
+import { useFileDrop } from "../hooks/useFileDrop";
 
 interface FileDropZoneProps {
   onFilesSelected: (files: File[]) => void;
@@ -15,65 +16,17 @@ export default function FileDropZone({
   maxSize,
   className = "",
 }: FileDropZoneProps) {
-  const [isDragOver, setIsDragOver] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragOver(false);
-  }, []);
-
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragOver(true);
-  }, []);
-
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragOver(false);
-
-    const files = Array.from(e.dataTransfer.files);
-    if (files.length > 0) {
-      processFiles(files);
-    }
-  }, []);
-
-  const handleFileInputChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const files = Array.from(e.target.files || []);
-      if (files.length > 0) {
-        processFiles(files);
-      }
-      // Reset the input value so the same file can be selected again
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
-    },
-    []
-  );
-
-  const processFiles = useCallback(
-    (files: File[]) => {
-      let validFiles = files;
-
-      // Filter by file size if maxSize is specified
-      if (maxSize) {
-        validFiles = validFiles.filter((file) => file.size <= maxSize);
-      }
-
-      if (validFiles.length > 0) {
-        onFilesSelected(validFiles);
-      }
-    },
-    [maxSize, onFilesSelected]
-  );
-
-  const handleClick = useCallback(() => {
-    fileInputRef.current?.click();
-  }, []);
+  const {
+    isDragOver,
+    fileInputRef,
+    dragHandlers,
+    handleFileInputChange,
+    handleClick,
+  } = useFileDrop({
+    onFilesSelected,
+    multiple,
+    maxSize,
+  });
 
   const boxClasses = isDragOver
     ? "border-blue-500 bg-blue-50 dark:bg-blue-950/20 scale-105"
@@ -89,9 +42,7 @@ export default function FileDropZone({
           flex flex-col items-center justify-center p-8
           ${boxClasses}
         `}
-        onDragLeave={handleDragLeave}
-        onDragOver={handleDragOver}
-        onDrop={handleDrop}
+        {...dragHandlers}
       >
         {/* Drag overlay */}
         {isDragOver && (

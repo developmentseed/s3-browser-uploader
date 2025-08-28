@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useCredentials } from "@/contexts/CredentialsContext";
 
-export function CredentialsForm() {
+export default function CredentialsForm() {
   const [username, setUsername] = useState("");
   const { credentials, loading, error, fetchCredentials } = useCredentials();
 
