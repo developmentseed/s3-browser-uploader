@@ -51,7 +51,7 @@ export default function S3FileExplorer({ className = "" }: S3FileExplorerProps) 
       // List objects with the specified prefix
       const command = new ListObjectsV2Command({
         Bucket: bucket,
-        Prefix: prefix,
+        Prefix: `${prefix}/`,
         Delimiter: "/",
         MaxKeys: 1000,
       });
