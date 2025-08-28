@@ -77,7 +77,7 @@ export default function FileDropZone({
 
   const boxClasses = isDragOver
     ? "border-blue-500 bg-blue-50 dark:bg-blue-950/20 scale-105"
-    : "border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500";
+    : "border-gray-300 dark:border-gray-600";
 
   return (
     <div>
