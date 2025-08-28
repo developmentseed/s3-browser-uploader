@@ -5,13 +5,53 @@ import { useCredentials } from "@/contexts/CredentialsContext";
 
 export default function CredentialsForm() {
   const [username, setUsername] = useState("");
-  const { credentials, loading, error, fetchCredentials } = useCredentials();
+  const {
+    credentials,
+    username: authenticatedUsername,
+    loading,
+    error,
+    fetchCredentials,
+    clearCredentials,
+  } = useCredentials();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     fetchCredentials(username);
   };
 
+  const handleLogout = () => {
+    clearCredentials();
+    setUsername("");
+  };
+
+  // Show authentication indicator when credentials exist
+  if (credentials && authenticatedUsername) {
+    return (
+      <div className="mb-8 p-6 border border-gray-300 dark:border-gray-600 rounded-xs bg-white dark:bg-black">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+              <span className="text-sm text-gray-600 dark:text-gray-400">
+                Authenticated as
+              </span>
+            </div>
+            <span className="font-semibold text-black dark:text-white">
+              {authenticatedUsername}
+            </span>
+          </div>
+          <button
+            onClick={handleLogout}
+            className="px-3 py-1.5 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+          >
+            Logout
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Show credentials form when no credentials exist
   return (
     <div className="mb-8 p-6 border border-gray-300 dark:border-gray-600 rounded-xs bg-white dark:bg-black">
       <h3 className="text-md font-semibold mb-4 text-black dark:text-white">
@@ -42,17 +82,6 @@ export default function CredentialsForm() {
         <div className="text-red-600 dark:text-red-400 text-sm mb-4">
           {error}
         </div>
-      )}
-
-      {credentials && (
-        <details className="mt-4 text-sm">
-          <summary className="mb-2 text-black dark:text-white">
-            Credentials
-          </summary>
-          <pre className="bg-white dark:bg-black text-black dark:text-white p-4 rounded-xs overflow-x-auto text-xs">
-            <code>{JSON.stringify(credentials, null, 2)}</code>
-          </pre>
-        </details>
       )}
     </div>
   );

@@ -21,21 +21,25 @@ interface ApiResponse {
 
 interface CredentialsContextType {
   credentials: Credentials | null;
+  username: string | null;
   loading: boolean;
   error: string | null;
   fetchCredentials: (username: string) => Promise<void>;
   clearCredentials: () => void;
 }
 
-const CredentialsContext = createContext<CredentialsContextType | undefined>(undefined);
+const CredentialsContext = createContext<CredentialsContextType | undefined>(
+  undefined
+);
 
 export function CredentialsProvider({ children }: { children: ReactNode }) {
   const [credentials, setCredentials] = useState<Credentials | null>(null);
+  const [username, setUsername] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchCredentials = async (username: string) => {
-    if (!username.trim()) {
+  const fetchCredentials = async (usernameInput: string) => {
+    if (!usernameInput.trim()) {
       setError("Please enter a username");
       return;
     }
@@ -43,6 +47,7 @@ export function CredentialsProvider({ children }: { children: ReactNode }) {
     setLoading(true);
     setError(null);
     setCredentials(null);
+    setUsername(null);
 
     try {
       const response = await fetch("/api/sts", {
@@ -50,13 +55,14 @@ export function CredentialsProvider({ children }: { children: ReactNode }) {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ username: username.trim() }),
+        body: JSON.stringify({ username: usernameInput.trim() }),
       });
 
       const data: ApiResponse = await response.json();
 
       if (data.success && data.credentials) {
         setCredentials(data.credentials);
+        setUsername(usernameInput.trim());
       } else {
         setError(data.error || "Failed to fetch credentials");
       }
@@ -70,6 +76,7 @@ export function CredentialsProvider({ children }: { children: ReactNode }) {
 
   const clearCredentials = () => {
     setCredentials(null);
+    setUsername(null);
     setError(null);
   };
 
@@ -77,6 +84,7 @@ export function CredentialsProvider({ children }: { children: ReactNode }) {
     <CredentialsContext.Provider
       value={{
         credentials,
+        username,
         loading,
         error,
         fetchCredentials,
