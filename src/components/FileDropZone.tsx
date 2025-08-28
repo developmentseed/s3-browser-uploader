@@ -84,7 +84,7 @@ export default function FileDropZone({
       <div
         className={`
           w-full ${className}
-          relative w-full min-h-[200px] rounded-lg border-2 border-dashed
+          relative w-full min-h-[200px] rounded-xs border-2 border-dashed
           transition-all duration-200 ease-in-out
           flex flex-col items-center justify-center p-8
           ${boxClasses}
@@ -95,7 +95,7 @@ export default function FileDropZone({
       >
         {/* Drag overlay */}
         {isDragOver && (
-          <div className="absolute inset-0 bg-blue-500/10 rounded-lg flex items-center justify-center">
+          <div className="absolute inset-0 bg-blue-500/10 rounded-xs flex items-center justify-center">
             <div className="text-blue-600 dark:text-blue-400 text-lg font-medium">
               Drop files here
             </div>
