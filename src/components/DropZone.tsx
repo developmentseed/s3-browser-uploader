@@ -5,11 +5,16 @@ import { useDropzone } from "react-dropzone";
 interface DropZoneProps {
   onDrop: (files: File[]) => void;
   className?: string;
+  disabled?: boolean;
 }
 
-export default function DropZone({ onDrop, className = "" }: DropZoneProps) {
+export default function DropZone({
+  onDrop,
+  className = "",
+  disabled = false,
+}: DropZoneProps) {
   const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
-    onDrop,
+    onDrop: disabled ? () => {} : onDrop,
     multiple: true,
     accept: {
       "image/*": [".jpeg", ".jpg", ".png", ".gif", ".webp"],
@@ -20,6 +25,7 @@ export default function DropZone({ onDrop, className = "" }: DropZoneProps) {
     },
     // Don't open file browser on click of the drop zone
     noClick: true,
+    disabled: disabled,
   });
 
   return (
@@ -28,25 +34,31 @@ export default function DropZone({ onDrop, className = "" }: DropZoneProps) {
       <div
         {...getRootProps()}
         className={`
-          p-8 border-2 border-dashed rounded-lg text-center cursor-pointer transition-all duration-200
+          p-8 border-2 border-dashed rounded-lg text-center transition-all duration-200
           ${
-            isDragActive
-              ? "border-blue-500 bg-blue-50 dark:bg-blue-950/20 scale-105"
-              : "border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500"
+            disabled
+              ? "border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 cursor-not-allowed opacity-60"
+              : isDragActive
+              ? "border-blue-500 bg-blue-50 dark:bg-blue-950/20 scale-105 cursor-pointer"
+              : "border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 cursor-pointer"
           }
           ${className}
         `.trim()}
       >
         <input {...getInputProps()} />
 
-        {isDragActive ? (
+        {isDragActive && !disabled ? (
           <div className="text-blue-600 dark:text-blue-400 text-lg font-medium">
             Drop files here!
           </div>
         ) : (
           <>
             <svg
-              className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500 mb-4"
+              className={`mx-auto h-12 w-12 mb-4 ${
+                disabled
+                  ? "text-gray-300 dark:text-gray-600"
+                  : "text-gray-400 dark:text-gray-500"
+              }`}
               stroke="currentColor"
               fill="none"
               viewBox="0 0 48 48"
@@ -59,11 +71,25 @@ export default function DropZone({ onDrop, className = "" }: DropZoneProps) {
                 strokeLinejoin="round"
               />
             </svg>
-            <div className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
-              Drop files here
+            <div
+              className={`text-lg font-medium mb-2 ${
+                disabled
+                  ? "text-gray-400 dark:text-gray-500"
+                  : "text-gray-900 dark:text-gray-100"
+              }`}
+            >
+              {disabled ? "Upload Disabled" : "Drop files here"}
             </div>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              Drag and drop multiple files
+            <p
+              className={`text-sm ${
+                disabled
+                  ? "text-gray-400 dark:text-gray-500"
+                  : "text-gray-500 dark:text-gray-400"
+              }`}
+            >
+              {disabled
+                ? "Please provide credentials to enable file upload"
+                : "Drag and drop multiple files"}
             </p>
           </>
         )}
@@ -73,12 +99,25 @@ export default function DropZone({ onDrop, className = "" }: DropZoneProps) {
       <div className="text-center">
         <button
           onClick={open}
-          className="px-6 py-3 bg-black dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-200 text-white dark:text-black rounded-lg font-medium transition-colors duration-200"
+          disabled={disabled}
+          className={`px-6 py-3 rounded-lg font-medium transition-colors duration-200 ${
+            disabled
+              ? "bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed"
+              : "bg-black dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-200 text-white dark:text-black"
+          }`}
         >
           Choose Files
         </button>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-          Or click the button above to browse files
+        <p
+          className={`text-sm mt-2 ${
+            disabled
+              ? "text-gray-400 dark:text-gray-500"
+              : "text-gray-500 dark:text-gray-400"
+          }`}
+        >
+          {disabled
+            ? "Upload is disabled until credentials are provided"
+            : "Or click the button above to browse files"}
         </p>
       </div>
     </div>
