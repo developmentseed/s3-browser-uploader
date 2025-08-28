@@ -1,6 +1,7 @@
 "use client";
 
 import { useDropzone } from "react-dropzone";
+import S3FileExplorer from "./S3FileExplorer";
 
 interface DropZoneProps {
   onDrop: (files: File[]) => void;
@@ -30,6 +31,9 @@ export default function DropZone({
 
   return (
     <div className="space-y-4">
+      {/* S3 File Explorer - shown when not disabled */}
+      {!disabled && <S3FileExplorer />}
+
       {/* Main drop zone */}
       <div
         {...getRootProps()}

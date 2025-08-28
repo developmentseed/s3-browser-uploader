@@ -22,6 +22,7 @@ interface ApiResponse {
 interface CredentialsContextType {
   credentials: Credentials | null;
   username: string | null;
+  bucket: string | null;
   loading: boolean;
   error: string | null;
   fetchCredentials: (username: string) => Promise<void>;
@@ -35,6 +36,7 @@ const CredentialsContext = createContext<CredentialsContextType | undefined>(
 export function CredentialsProvider({ children }: { children: ReactNode }) {
   const [credentials, setCredentials] = useState<Credentials | null>(null);
   const [username, setUsername] = useState<string | null>(null);
+  const [bucket, setBucket] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -48,6 +50,7 @@ export function CredentialsProvider({ children }: { children: ReactNode }) {
     setError(null);
     setCredentials(null);
     setUsername(null);
+    setBucket(null);
 
     try {
       const response = await fetch("/api/sts", {
@@ -63,6 +66,7 @@ export function CredentialsProvider({ children }: { children: ReactNode }) {
       if (data.success && data.credentials) {
         setCredentials(data.credentials);
         setUsername(usernameInput.trim());
+        setBucket(data.bucket || null);
       } else {
         setError(data.error || "Failed to fetch credentials");
       }
@@ -77,6 +81,7 @@ export function CredentialsProvider({ children }: { children: ReactNode }) {
   const clearCredentials = () => {
     setCredentials(null);
     setUsername(null);
+    setBucket(null);
     setError(null);
   };
 
@@ -85,6 +90,7 @@ export function CredentialsProvider({ children }: { children: ReactNode }) {
       value={{
         credentials,
         username,
+        bucket,
         loading,
         error,
         fetchCredentials,

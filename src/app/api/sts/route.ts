@@ -33,16 +33,18 @@ export async function POST(request: NextRequest) {
       Statement: [
         {
           Effect: "Allow",
-          Action: [
-            "s3:GetObject",
-            "s3:PutObject",
-            "s3:DeleteObject",
-            "s3:ListBucket",
-          ],
-          Resource: [
-            `arn:aws:s3:::${BUCKET_NAME}`,
-            `arn:aws:s3:::${BUCKET_NAME}/${username}/*`,
-          ],
+          Action: ["s3:ListBucket"],
+          Resource: [`arn:aws:s3:::${BUCKET_NAME}`],
+          Condition: {
+            StringLike: {
+              "s3:prefix": [`${username}/*`, `${username}`],
+            },
+          },
+        },
+        {
+          Effect: "Allow",
+          Action: ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"],
+          Resource: [`arn:aws:s3:::${BUCKET_NAME}/${username}/*`],
         },
       ],
     };
