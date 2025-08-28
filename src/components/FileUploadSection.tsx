@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { useCredentials } from "@/contexts/CredentialsContext";
-import { DropZone } from "@/components";
+import { FileExplorer } from "@/components";
 import { Upload } from "@aws-sdk/lib-storage";
 import { S3Client } from "@aws-sdk/client-s3";
 
@@ -15,21 +15,28 @@ interface UploadProgress {
   error?: string;
 }
 
-export default function FileUploadSection() {
+interface FileUploadSectionProps {
+  prefix: string;
+  onPrefixChange: (prefix: string) => void;
+}
+
+export default function FileUploadSection({
+  prefix,
+  onPrefixChange,
+}: FileUploadSectionProps) {
   const { credentials, username, bucket } = useCredentials();
   const [uploadProgress, setUploadProgress] = useState<UploadProgress[]>([]);
-  const [currentPath, setCurrentPath] = useState<string>("");
 
   const handleFilesSelected = useCallback(
-    async (files: File[], path: string) => {
+    async (files: File[], filePrefix: string) => {
       // Early return if no credentials are available
       if (!credentials || !username || !bucket) {
         console.log("No credentials available, file upload disabled");
         return;
       }
 
-      console.log("Selected files:", files, "for path:", path);
-      setCurrentPath(path);
+      console.log("Selected files:", files, "for prefix:", filePrefix);
+      onPrefixChange(filePrefix);
 
       // Create S3 client with user credentials
       const s3Client = new S3Client({
@@ -44,9 +51,7 @@ export default function FileUploadSection() {
       // Initialize upload progress for each file
       const initialProgress: UploadProgress[] = files.map((file) => ({
         file,
-        key: path
-          ? `${username}/${path}/${file.name}`
-          : `${username}/${file.name}`,
+        key: `${username}/${prefix}${file.name}`,
         uploadedBytes: 0,
         totalBytes: file.size,
         status: "uploading",
@@ -57,9 +62,7 @@ export default function FileUploadSection() {
       // Upload each file
       files.forEach(async (file, index) => {
         try {
-          const key = path
-            ? `${username}/${path}/${file.name}`
-            : `${username}/${file.name}`;
+          const key = `${username}/${prefix}${file.name}`;
 
           const upload = new Upload({
             client: s3Client,
@@ -124,10 +127,6 @@ export default function FileUploadSection() {
     [credentials, username, bucket]
   );
 
-  const handlePathChange = useCallback((path: string) => {
-    setCurrentPath(path);
-  }, []);
-
   // Clean up completed uploads after a delay
   const cleanupCompletedUploads = useCallback(() => {
     setTimeout(() => {
@@ -148,14 +147,12 @@ export default function FileUploadSection() {
   }, [uploadProgress, cleanupCompletedUploads]);
 
   return (
-    <div className="space-y-6">
-      <DropZone
-        onDrop={handleFilesSelected}
-        disabled={!credentials}
-        currentPath={currentPath}
-        uploadProgress={uploadProgress}
-        onPathChange={handlePathChange}
-      />
-    </div>
+    <FileExplorer
+      onFileUpload={(files) => handleFilesSelected(files, prefix)}
+      disabled={!credentials}
+      uploadProgress={uploadProgress}
+      prefix={prefix}
+      onPrefixChange={onPrefixChange}
+    />
   );
 }
