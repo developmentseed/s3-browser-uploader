@@ -1,6 +1,12 @@
 "use client";
 
-import { createContext, useContext, useState, ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
 
 interface Credentials {
   accessKeyId: string;
@@ -33,7 +39,13 @@ const CredentialsContext = createContext<CredentialsContextType | undefined>(
   undefined
 );
 
-export function CredentialsProvider({ children }: { children: ReactNode }) {
+export function CredentialsProvider({
+  children,
+  initialUsername,
+}: {
+  children: ReactNode;
+  initialUsername?: string;
+}) {
   const [credentials, setCredentials] = useState<Credentials | null>(null);
   const [username, setUsername] = useState<string | null>(null);
   const [bucket, setBucket] = useState<string | null>(null);
@@ -84,6 +96,13 @@ export function CredentialsProvider({ children }: { children: ReactNode }) {
     setBucket(null);
     setError(null);
   };
+
+  // Auto-fetch credentials when initialUsername is provided
+  useEffect(() => {
+    if (initialUsername && !credentials && !loading) {
+      fetchCredentials(initialUsername);
+    }
+  }, [initialUsername, credentials, loading]);
 
   return (
     <CredentialsContext.Provider
