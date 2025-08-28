@@ -1,111 +1,172 @@
 # S3 Browser Upload
 
-A Next.js application for secure file uploads to AWS S3 using temporary credentials via AWS STS.
+A secure file upload solution powered by AWS S3 with multipart upload support and real-time progress tracking.
 
 ## Features
 
-- **Secure Authentication**: Temporary AWS credentials via STS with username-scoped permissions
-- **File Upload**: Drag and drop file uploads to S3
-- **S3 File Explorer**: Browse existing files and directories within your S3 bucket
-- **User Isolation**: Each user only sees files within their username prefix
-- **Modern UI**: Responsive design with dark/light mode support
+- **Secure File Upload**: Uses AWS STS temporary credentials for secure file uploads
+- **Multipart Upload**: Supports large files with automatic multipart upload using AWS SDK
+- **Real-time Progress**: Live progress tracking showing bytes uploaded vs total bytes
+- **File Explorer**: Browse S3 buckets and navigate directories
+- **Drag & Drop**: Intuitive drag and drop interface for file selection
+- **Progress Visualization**: Visual progress bars and status indicators for uploads
 
-## S3 File Explorer
+## How It Works
 
-The application includes a built-in S3 file explorer that allows users to:
+### File Upload Process
 
-- Navigate through directories and subdirectories
-- View file metadata (size, creation date)
-- Browse files scoped to their username prefix
-- Navigate back through breadcrumb navigation
+1. **File Selection**: Users can drag and drop files or click to browse and select files
+2. **Path Detection**: Files are automatically uploaded to the currently viewed directory in the S3 file explorer
+3. **Multipart Upload**: Large files are automatically split into 5MB chunks for efficient upload
+4. **Progress Tracking**: Real-time progress updates show:
+   - Current upload status (uploading, completed, error)
+   - Bytes uploaded vs total bytes
+   - Visual progress bars
+   - Status icons and messages
 
-### Environment Variables
+### Upload States
 
-Create a `.env.local` file in your project root:
+- **Uploading**: Orange progress bar with spinning indicator
+- **Completed**: Green checkmark with "Upload completed" message
+- **Error**: Red error icon with error details
 
-```bash
-# AWS Configuration
-AWS_REGION=us-east-1
-AWS_ACCESS_KEY_ID=your_access_key_here
-AWS_SECRET_ACCESS_KEY=your_secret_key_here
+### Technical Implementation
 
-# S3 Configuration
-S3_BUCKET_NAME=your-s3-bucket-name
+- Uses `@aws-sdk/lib-storage` for multipart uploads
+- Configurable chunk size (5MB) and concurrent uploads (4)
+- Automatic cleanup of completed uploads after 5 seconds
+- File list refresh after uploads complete
+- Error handling with detailed error messages
 
-# IAM Role ARN for STS
-IAM_ROLE_ARN=arn:aws:iam::YOUR_ACCOUNT_ID:role/YOUR_ROLE_NAME
-```
+## Usage
 
-**Note**: The S3 bucket name is configured on the server side and is returned to the client when credentials are fetched. No client-side environment variables are required for the S3 file explorer.
+1. Navigate to the application with a username parameter: `/?user=yourusername`
+2. Provide AWS credentials when prompted
+3. Browse to the desired directory in the S3 file explorer
+4. Drag and drop files or click "Choose Files" to select files
+5. Monitor upload progress in real-time
+6. Files appear in the explorer once uploads complete
 
-## Architecture
+## AWS Configuration Requirements
 
-- **Credential Flow**: Client requests credentials → Server returns credentials + bucket name → Client uses both for S3 operations
-- **Client-side S3 Operations**: Uses AWS SDK directly in the browser for listing S3 objects
-- **Secure Credentials**: Temporary credentials with limited scope and expiration
-- **No Server Storage**: Credentials are never stored on the server
-- **User Scoping**: Each user's access is limited to their username prefix
+### S3 Bucket CORS Configuration
 
-## S3 CORS Configuration
-
-To enable direct browser access to S3, you need to configure CORS on your S3 bucket. This allows the browser to make requests directly to S3 without CORS errors.
-
-### CORS Configuration
-
-Add the following CORS configuration to your S3 bucket:
+Your S3 bucket must have the following CORS configuration to support multipart uploads with checksums:
 
 ```json
 [
     {
-        "AllowedHeaders": ["*"],
-        "AllowedMethods": ["GET", "PUT", "POST", "DELETE", "HEAD"],
-        "AllowedOrigins": ["http://localhost:3000", "http://localhost:3002", "https://yourdomain.com"],
-        "ExposeHeaders": ["ETag"]
+        "AllowedHeaders": [
+            "*"
+        ],
+        "AllowedMethods": [
+            "GET",
+            "PUT",
+            "POST",
+            "DELETE",
+            "HEAD"
+        ],
+        "AllowedOrigins": [
+            "http://localhost:3000",
+            "http://localhost:3002",
+            "https://yourdomain.com"
+        ],
+        "ExposeHeaders": [
+            "ETag",
+            "x-amz-multipart-upload-id",
+            "x-amz-version-id",
+            "x-amz-checksum-crc32"
+        ]
     }
 ]
 ```
 
-**Important**: Replace the `AllowedOrigins` with your actual domain(s). For development, include `http://localhost:3000` and `http://localhost:3002`.
+**Critical**: The `x-amz-checksum-crc32` header is essential for multipart uploads with checksums to work properly.
 
-### How to Configure CORS
+### IAM Role Permissions
 
-1. **AWS Console**: Go to S3 → Your Bucket → Permissions → CORS configuration
-2. **AWS CLI**: Use the `aws s3api put-bucket-cors` command
-3. **Terraform/CloudFormation**: Include CORS configuration in your IaC
+The IAM role being assumed must have these permissions:
 
-### Benefits of Direct S3 Access
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "BucketOperations",
+            "Effect": "Allow",
+            "Action": [
+                "s3:ListBucket"
+            ],
+            "Resource": "arn:aws:s3:::YOUR_BUCKET_NAME"
+        },
+        {
+            "Sid": "ObjectOperations",
+            "Effect": "Allow",
+            "Action": [
+                "s3:PutObject",
+                "s3:GetObject",
+                "s3:DeleteObject",
+                "s3:AbortMultipartUpload",
+                "s3:ListMultipartUploadParts",
+                "s3:PutObjectAcl"
+            ],
+            "Resource": "arn:aws:s3:::YOUR_BUCKET_NAME/*"
+        }
+    ]
+}
+```
 
-- **Better Performance**: No API round-trips
-- **Reduced Server Load**: S3 operations happen directly from client
-- **Real-time Updates**: Immediate S3 communication
-- **Scalability**: Server doesn't handle S3 listing requests
+### Required IAM Actions Explained
 
-## Security Features
+- **`s3:ListBucket`**: Browse bucket contents
+- **`s3:PutObject`**: Upload files
+- **`s3:GetObject`**: Download/view files
+- **`s3:DeleteObject`**: Remove files
+- **`s3:AbortMultipartUpload`**: Clean up failed multipart uploads
+- **`s3:ListMultipartUploadParts`**: Track multipart upload progress
+- **`s3:PutObjectAcl`**: Set object metadata and permissions
 
-- **Temporary Credentials**: STS credentials expire after 1 hour
-- **Scoped Permissions**: Users only access files within their username prefix
-- **Client-side Validation**: S3 operations use user's temporary credentials directly
-- **No Credential Storage**: Server never stores or accesses user credentials
+## Development
 
-## Getting Started
+```bash
+# Install dependencies
+pnpm install
 
-1. Clone the repository
-2. Install dependencies: `npm install`
-3. Configure environment variables in `.env.local`
-4. Set up AWS IAM roles and permissions
-5. Run the development server: `npm run dev`
+# Start development server
+pnpm run dev
 
-## Usage
-
-1. **Authentication**: Enter your username to get temporary AWS credentials
-2. **File Explorer**: Browse existing files and directories in your S3 bucket
-3. **File Upload**: Drag and drop files to upload new content
-4. **Navigation**: Click into directories and use breadcrumbs to navigate back
+# Build for production
+pnpm run build
+```
 
 ## Dependencies
 
-- Next.js 15.5.2
-- React 19.1.0
-- AWS SDK v3 for S3 and STS
-- React Dropzone for file uploads
-- Tailwind CSS for styling
+- `@aws-sdk/client-s3`: S3 client for file operations
+- `@aws-sdk/client-sts`: STS client for temporary credentials
+- `@aws-sdk/lib-storage`: Multipart upload support
+- `react-dropzone`: Drag and drop file interface
+- `next`: React framework
+- `tailwindcss`: Styling
+
+## Architecture
+
+The application uses a component-based architecture with:
+
+- **FileUploadSection**: Main upload coordinator
+- **DropZone**: File selection and drag & drop interface
+- **S3FileExplorer**: File browser with upload progress display
+- **CredentialsContext**: AWS credentials management
+
+Upload progress is managed at the FileUploadSection level and passed down to child components for display.
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Checksum Validation Errors**: Ensure CORS includes `x-amz-checksum-crc32` header
+2. **Multipart Upload Failures**: Verify IAM role has all required multipart permissions
+3. **CORS Errors**: Check that your domain is included in `AllowedOrigins`
+
+### Debug Mode
+
+The application now shows native AWS error messages to help diagnose configuration issues.

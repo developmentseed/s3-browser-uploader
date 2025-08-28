@@ -3,27 +3,42 @@
 import { useDropzone } from "react-dropzone";
 import S3FileExplorer from "./S3FileExplorer";
 
+interface UploadProgress {
+  file: File;
+  key: string;
+  uploadedBytes: number;
+  totalBytes: number;
+  status: "uploading" | "completed" | "error";
+  error?: string;
+}
+
 interface DropZoneProps {
-  onDrop: (files: File[]) => void;
+  onDrop: (files: File[], currentPath: string) => void;
   className?: string;
   disabled?: boolean;
+  currentPath?: string;
+  uploadProgress: UploadProgress[];
+  onPathChange?: (path: string) => void;
 }
 
 export default function DropZone({
   onDrop,
   className = "",
   disabled = false,
+  currentPath = "",
+  uploadProgress = [],
+  onPathChange,
 }: DropZoneProps) {
   const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
-    onDrop: disabled ? () => {} : onDrop,
+    onDrop: disabled ? () => {} : (files) => onDrop(files, currentPath),
     multiple: true,
-    accept: {
-      "image/*": [".jpeg", ".jpg", ".png", ".gif", ".webp"],
-      "text/*": [".txt", ".md", ".json", ".csv"],
-      "application/pdf": [".pdf"],
-      "application/zip": [".zip"],
-      "application/json": [".json"],
-    },
+    // accept: {
+    //   "image/*": [".jpeg", ".jpg", ".png", ".gif", ".webp"],
+    //   "text/*": [".txt", ".md", ".json", ".csv"],
+    //   "application/pdf": [".pdf"],
+    //   "application/zip": [".zip"],
+    //   "application/json": [".json"],
+    // },
     // Don't open file browser on click of the drop zone
     noClick: true,
     disabled: disabled,
@@ -32,7 +47,12 @@ export default function DropZone({
   return (
     <div className="space-y-4">
       {/* S3 File Explorer - shown when not disabled */}
-      {!disabled && <S3FileExplorer />}
+      {!disabled && (
+        <S3FileExplorer
+          uploadProgress={uploadProgress}
+          onPathChange={onPathChange}
+        />
+      )}
 
       {/* Main drop zone */}
       <div

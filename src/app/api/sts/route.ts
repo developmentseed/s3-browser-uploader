@@ -43,7 +43,14 @@ export async function POST(request: NextRequest) {
         },
         {
           Effect: "Allow",
-          Action: ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"],
+          Action: [
+            "s3:GetObject",
+            "s3:PutObject",
+            "s3:DeleteObject",
+            "s3:AbortMultipartUpload",
+            "s3:ListMultipartUploadParts",
+            "s3:PutObjectAcl",
+          ],
           Resource: [`arn:aws:s3:::${BUCKET_NAME}/${username}/*`],
         },
       ],

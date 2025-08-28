@@ -6,11 +6,17 @@ import {
   useCredentials,
 } from "@/contexts/CredentialsContext";
 import { useSearchParams } from "next/navigation";
+import { useState, useEffect } from "react";
 
 function HomeContent() {
   const { loading } = useCredentials();
   const searchParams = useSearchParams();
   const username = searchParams.get("user") || undefined;
+  const [origin, setOrigin] = useState<string>("");
+
+  useEffect(() => {
+    setOrigin(window.location.origin);
+  }, []);
 
   if (!username) {
     return (
@@ -73,15 +79,17 @@ function HomeContent() {
                 Please provide a username in the URL to continue.
               </p>
 
-              <p className="font-mono text-sm text-gray-700 dark:text-gray-300">
-                Example:
-                <a
-                  href={`${window.location.origin}/?user=john`}
-                  className="text-black-600 dark:text-black-400 font-semibold"
-                >
-                  {window.location.origin}/?user=john
-                </a>
-              </p>
+              {origin && (
+                <p className="font-mono text-sm text-gray-700 dark:text-gray-300">
+                  Example:
+                  <a
+                    href={`${origin}/?user=john`}
+                    className="text-black-600 dark:text-black-400 font-semibold"
+                  >
+                    {origin}/?user=john
+                  </a>
+                </p>
+              )}
 
               <p className="mt-4 text-sm text-gray-500 dark:text-gray-500">
                 In production, this would be retrieved from a JWT after user
