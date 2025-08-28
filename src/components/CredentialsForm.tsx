@@ -14,7 +14,7 @@ export function CredentialsForm() {
 
   return (
     <div className="mb-8 p-6 border border-gray-300 dark:border-gray-600 rounded-xs bg-white dark:bg-black">
-      <h3 className="text-lg font-semibold mb-4 text-black dark:text-white">
+      <h3 className="text-md font-semibold mb-4 text-black dark:text-white">
         Get AWS Credentials
       </h3>
 
