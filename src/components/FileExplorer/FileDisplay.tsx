@@ -2,13 +2,26 @@ import React from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { formatDate, formatFileSize } from "@/app/utils";
-import { FileIcon } from "./FileIcon";
 import type { FileItem } from "./FileExplorer";
+import {
+  FolderIcon,
+  UploadIcon,
+  ErrorIcon,
+  FileIcon,
+} from "../../app/graphics";
 
 interface FileItemProps {
   item: FileItem;
   username: string;
 }
+
+export const FileDisplay: React.FC<FileItemProps> = ({ item }) => {
+  return item.isDirectory ? (
+    <DirectoryItem item={item} />
+  ) : (
+    <FileItem item={item} />
+  );
+};
 
 const DirectoryItem = ({ item }: { item: FileItem }) => {
   const searchParams = useSearchParams();
@@ -21,7 +34,7 @@ const DirectoryItem = ({ item }: { item: FileItem }) => {
     >
       {/* Icon */}
       <div className="flex-shrink-0 w-5">
-        <FileIcon item={item} />
+        <FileDisplayIcon item={item} />
       </div>
 
       {/* Directory Info */}
@@ -38,7 +51,7 @@ const DirectoryItem = ({ item }: { item: FileItem }) => {
   );
 };
 
-const FileItemComponent = ({ item }: { item: FileItem }) => (
+const FileItem = ({ item }: { item: FileItem }) => (
   <div
     className={`flex items-center gap-3 px-2 py-1.5 rounded transition-colors ${
       item.isUpload && item.uploadStatus === "uploading"
@@ -50,7 +63,7 @@ const FileItemComponent = ({ item }: { item: FileItem }) => (
   >
     {/* Icon */}
     <div className="flex-shrink-0 w-5">
-      <FileIcon item={item} />
+      <FileDisplayIcon item={item} />
     </div>
 
     {/* File Info - Compact single line */}
@@ -97,10 +110,20 @@ const FileItemComponent = ({ item }: { item: FileItem }) => (
   </div>
 );
 
-export const FileDisplay: React.FC<FileItemProps> = ({ item }) => {
-  return item.isDirectory ? (
-    <DirectoryItem item={item} />
-  ) : (
-    <FileItemComponent item={item} />
-  );
+const FileDisplayIcon = ({ item }: { item: FileItem }) => {
+  if (item.isDirectory) {
+    return <FolderIcon className="w-5 h-5 text-blue-600 dark:text-blue-400" />;
+  }
+
+  if (item.isUpload && item.uploadStatus === "uploading") {
+    return (
+      <UploadIcon className="w-5 h-5 text-orange-600 dark:text-orange-400" />
+    );
+  }
+
+  if (item.isUpload && item.uploadStatus === "error") {
+    return <ErrorIcon className="w-5 h-5 text-red-600 dark:text-red-400" />;
+  }
+
+  return <FileIcon className="w-5 h-5 text-gray-600 dark:text-gray-400" />;
 };
