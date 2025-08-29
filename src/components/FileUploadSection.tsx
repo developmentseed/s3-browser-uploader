@@ -20,13 +20,13 @@ interface FileUploadSectionProps {
 }
 
 export default function FileUploadSection({ prefix }: FileUploadSectionProps) {
-  const { credentials, username, bucket } = useCredentials();
+  const { credentials, bucket } = useCredentials();
   const [uploadProgress, setUploadProgress] = useState<UploadProgress[]>([]);
 
   const handleFilesSelected = useCallback(
     async (files: File[]) => {
       // Early return if no credentials are available
-      if (!credentials || !username || !bucket) {
+      if (!credentials || !bucket) {
         console.log("No credentials available, file upload disabled");
         return;
       }
@@ -47,7 +47,7 @@ export default function FileUploadSection({ prefix }: FileUploadSectionProps) {
       // Initialize upload progress for each file
       const initialProgress: UploadProgress[] = files.map((file) => ({
         file,
-        key: `${username}/${normalizedPrefix}${file.name}`,
+        key: `${normalizedPrefix}${file.name}`,
         uploadedBytes: 0,
         totalBytes: file.size,
         status: "uploading",
@@ -58,7 +58,7 @@ export default function FileUploadSection({ prefix }: FileUploadSectionProps) {
       // Upload each file
       files.forEach(async (file, index) => {
         try {
-          const key = `${username}/${normalizedPrefix}${file.name}`;
+          const key = `${normalizedPrefix}${file.name}`;
 
           const upload = new Upload({
             client: s3Client,
@@ -120,7 +120,7 @@ export default function FileUploadSection({ prefix }: FileUploadSectionProps) {
         }
       });
     },
-    [credentials, username, bucket, prefix]
+    [credentials, bucket, prefix]
   );
 
   return (

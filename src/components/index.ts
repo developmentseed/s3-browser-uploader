@@ -1,4 +1,3 @@
-export { default as CredentialsForm } from "./CredentialsForm";
 export { default as FileUploadSection } from "./FileUploadSection";
 export { default as FileExplorer } from "./FileExplorer/FileExplorer";
 export { default as UsernameWarning } from "./UsernameWarning";

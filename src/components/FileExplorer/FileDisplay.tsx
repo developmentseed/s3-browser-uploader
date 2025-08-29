@@ -1,6 +1,5 @@
 import React from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 import { formatDate, formatFileSize } from "@/app/utils";
 import type { FileItem } from "./FileExplorer";
 import {
@@ -12,7 +11,6 @@ import {
 
 interface FileItemProps {
   item: FileItem;
-  username: string;
 }
 
 export const FileDisplay: React.FC<FileItemProps> = ({ item }) => {
@@ -24,12 +22,9 @@ export const FileDisplay: React.FC<FileItemProps> = ({ item }) => {
 };
 
 const DirectoryItem = ({ item }: { item: FileItem }) => {
-  const searchParams = useSearchParams();
-  const user = searchParams.get("user")!;
-
   return (
     <Link
-      href={`/?user=${user}&prefix=${item.key}`}
+      href={`/?prefix=${item.key}`}
       className="flex items-center gap-3 px-2 py-1.5 rounded transition-colors hover:bg-blue-50 dark:hover:bg-blue-950/20"
     >
       {/* Icon */}

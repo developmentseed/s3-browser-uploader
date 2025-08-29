@@ -51,7 +51,7 @@ export default function FileExplorer({
   disabled = false,
   prefix,
 }: FileExplorerProps) {
-  const { credentials, username, bucket } = useCredentials();
+  const { credentials, bucket } = useCredentials();
   const [objects, setObjects] = useState<S3Object[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -70,10 +70,10 @@ export default function FileExplorer({
 
   // Fetch S3 objects when credentials or prefix changes
   useEffect(() => {
-    if (credentials && username && bucket) {
+    if (credentials && bucket) {
       fetchS3Objects();
     }
-  }, [credentials, username, bucket, prefix]);
+  }, [credentials, bucket, prefix]);
 
   // Refresh file list when ALL uploads complete
   useEffect(() => {
@@ -95,7 +95,7 @@ export default function FileExplorer({
   }, [uploadProgress]);
 
   const fetchS3Objects = async () => {
-    if (!credentials || !username || !bucket) return;
+    if (!credentials || !bucket) return;
 
     setLoading(true);
     setError(null);
@@ -111,13 +111,10 @@ export default function FileExplorer({
         },
       });
 
-      // Add username to prefix for S3 calls
-      const s3Prefix = `${username}/${prefix}`;
-
       // List objects with the specified prefix
       const command = new ListObjectsV2Command({
         Bucket: bucket,
-        Prefix: s3Prefix,
+        Prefix: prefix.endsWith("/") ? prefix : `${prefix}/`,
         Delimiter: "/",
         MaxKeys: 1000,
       });
@@ -132,9 +129,9 @@ export default function FileExplorer({
         response.CommonPrefixes.forEach((commonPrefix) => {
           if (commonPrefix.Prefix) {
             // Remove username from the key for display
-            const displayKey = commonPrefix.Prefix.replace(`${username}/`, "");
+            // const displayKey = commonPrefix.Prefix.replace(`${username}/`, "");
             objects.push({
-              key: displayKey,
+              key: commonPrefix.Prefix,
               lastModified: new Date().toISOString(), // Directories don't have lastModified
               size: 0,
               isDirectory: true,
@@ -146,9 +143,9 @@ export default function FileExplorer({
       // Add files
       if (response.Contents) {
         response.Contents.forEach((content) => {
-          if (content.Key && content.Key !== s3Prefix) {
+          if (content.Key && content.Key !== prefix) {
             // Remove username from the key for display
-            const displayKey = content.Key.replace(`${username}/`, "");
+            const displayKey = content.Key.replace(`${prefix}/`, "");
             objects.push({
               key: displayKey,
               lastModified:
@@ -244,11 +241,11 @@ export default function FileExplorer({
     });
   };
 
-  if (!credentials || !username || !bucket) {
-    console.log({ credentials, username, bucket });
+  if (!credentials || !bucket) {
     return (
       <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-        Uh oh, something went wrong.
+        Uh oh, something went wrong when fetching your credentials. Please try
+        again.
       </div>
     );
   }
@@ -282,43 +279,29 @@ export default function FileExplorer({
           {/* Breadcrumb Navigation and Buttons */}
           <div className="flex items-center justify-between p-2">
             {/* Breadcrumb Navigation */}
-            <div className="flex font-mono items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-              <Link
-                href={`/?user=${username}`}
-                className="hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
-              >
-                {username}
-              </Link>
-              {prefix !== "" && (
-                <>
-                  <span>/</span>
-                  {prefix
-                    .split("/")
-                    .filter(Boolean)
-                    .map((segment, index) => {
-                      const newPrefix =
+            <div className="flex font-mono items-center gap-1 text-sm text-gray-600 dark:text-gray-400">
+              {prefix
+                .split("/")
+                .filter(Boolean)
+                .map((segment, index) => (
+                  <span key={index} className="flex items-center gap-1">
+                    <Link
+                      href={`/?prefix=${
                         prefix
                           .split("/")
                           .filter(Boolean)
                           .slice(0, index + 1)
-                          .join("/") + "/";
-                      return (
-                        <div key={index} className="flex items-center gap-2">
-                          <Link
-                            href={`/?user=${username}&prefix=${newPrefix}`}
-                            className="hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
-                          >
-                            {segment}
-                          </Link>
-                          {index <
-                            prefix.split("/").filter(Boolean).length - 1 && (
-                            <span>/</span>
-                          )}
-                        </div>
-                      );
-                    })}
-                </>
-              )}
+                          .join("/") + "/"
+                      }`}
+                      className="hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
+                    >
+                      {segment}
+                    </Link>
+                    {index < prefix.split("/").filter(Boolean).length - 1 && (
+                      <span>/</span>
+                    )}
+                  </span>
+                ))}
             </div>
 
             {/* Buttons */}
@@ -356,7 +339,7 @@ export default function FileExplorer({
               </div>
             ) : (
               getUnifiedFileList().map((item) => (
-                <FileDisplay key={item.key} item={item} username={username} />
+                <FileDisplay key={item.key} item={item} />
               ))
             )}
           </div>

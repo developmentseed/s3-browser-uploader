@@ -23,10 +23,10 @@ export default function Home() {
 
 function HomeContent() {
   const searchParams = useSearchParams();
-  const username = searchParams.get("user") || undefined;
-
   // Get prefix directly from URL - no local state needed
   const prefix = searchParams.get("prefix") || "";
+
+  const username = prefix.split("/")[0];
 
   // Show username warning if no username provided
   if (!username) {
@@ -35,7 +35,7 @@ function HomeContent() {
 
   // Wrap the authenticated content in CredentialsProvider
   return (
-    <CredentialsProvider initialUsername={username}>
+    <CredentialsProvider username={username}>
       <AuthenticatedContent username={username} prefix={prefix} />
     </CredentialsProvider>
   );

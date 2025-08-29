@@ -27,7 +27,6 @@ interface ApiResponse {
 
 interface CredentialsContextType {
   credentials: Credentials | null;
-  username: string | null;
   bucket: string | null;
   loading: boolean;
   error: string | null;
@@ -41,13 +40,12 @@ const CredentialsContext = createContext<CredentialsContextType | undefined>(
 
 export function CredentialsProvider({
   children,
-  initialUsername,
+  username,
 }: {
   children: ReactNode;
-  initialUsername?: string;
+  username: string;
 }) {
   const [credentials, setCredentials] = useState<Credentials | null>(null);
-  const [username, setUsername] = useState<string | null>(null);
   const [bucket, setBucket] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -61,7 +59,6 @@ export function CredentialsProvider({
     setLoading(true);
     setError(null);
     setCredentials(null);
-    setUsername(null);
     setBucket(null);
 
     try {
@@ -77,7 +74,6 @@ export function CredentialsProvider({
 
       if (data.success && data.credentials) {
         setCredentials(data.credentials);
-        setUsername(usernameInput.trim());
         setBucket(data.bucket || null);
       } else {
         setError(data.error || "Failed to fetch credentials");
@@ -92,23 +88,21 @@ export function CredentialsProvider({
 
   const clearCredentials = () => {
     setCredentials(null);
-    setUsername(null);
     setBucket(null);
     setError(null);
   };
 
-  // Auto-fetch credentials when initialUsername is provided
+  // Auto-fetch credentials when username is provided
   useEffect(() => {
-    if (initialUsername && !credentials && !loading) {
-      fetchCredentials(initialUsername);
+    if (username && !credentials && !loading) {
+      fetchCredentials(username);
     }
-  }, [initialUsername, credentials, loading]);
+  }, [username, credentials, loading]);
 
   return (
     <CredentialsContext.Provider
       value={{
         credentials,
-        username,
         bucket,
         loading,
         error,

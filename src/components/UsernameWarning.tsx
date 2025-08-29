@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect } from "react";
 import { UserIcon, WarningIcon } from "../app/graphics";
 
 interface UsernameWarningProps {
@@ -9,12 +8,6 @@ interface UsernameWarningProps {
 }
 
 export default function UsernameWarning({ username }: UsernameWarningProps) {
-  const [origin, setOrigin] = useState<string>("");
-
-  useEffect(() => {
-    setOrigin(window.location.origin);
-  }, []);
-
   if (username) {
     return null;
   }
@@ -54,7 +47,7 @@ export default function UsernameWarning({ username }: UsernameWarningProps) {
             <ul>
               <li>
                 <Link
-                  href="/?user=bob"
+                  href="/?prefix=bob"
                   className="text-black-600 dark:text-black-400 font-semibold"
                 >
                   Bob
@@ -62,7 +55,7 @@ export default function UsernameWarning({ username }: UsernameWarningProps) {
               </li>
               <li>
                 <Link
-                  href="/?user=alice"
+                  href="/?prefix=alice"
                   className="text-black-600 dark:text-black-400 font-semibold"
                 >
                   Alice
