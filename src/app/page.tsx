@@ -12,7 +12,6 @@ import {
 } from "@/contexts";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
-import { AppIcon } from "@/app/graphics";
 
 export default function Home() {
   return (
@@ -62,12 +61,6 @@ function AuthenticatedContent({
       <div className="mx-auto max-w-4xl px-6 py-8">
         {/* Header */}
         <div className="mb-8 text-center sm:mb-12">
-          <div className="mb-4 flex items-center justify-center">
-            <div className="rounded-lg bg-blue-100 p-3 dark:bg-blue-900/20">
-              <AppIcon className="h-8 w-8 text-blue-600 dark:text-blue-400" />
-            </div>
-          </div>
-
           <h1 className="mb-3 font-geist text-3xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-4xl">
             File Upload Demo
           </h1>
