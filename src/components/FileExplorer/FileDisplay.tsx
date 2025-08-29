@@ -42,10 +42,6 @@ const DirectoryItem = ({ item }: { item: FileItem }) => {
         <div className="font-medium text-gray-900 dark:text-gray-100 truncate min-w-0 flex-1">
           {item.name}
         </div>
-
-        <div className="text-gray-500 dark:text-gray-400 flex-shrink-0">
-          Directory
-        </div>
       </div>
     </Link>
   );
