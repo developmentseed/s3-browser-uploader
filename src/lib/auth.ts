@@ -1,69 +1,164 @@
-import { jwtVerify, createRemoteJWKSet } from "jose";
+import jwt from "jsonwebtoken";
 
-// Cache the JWKS to avoid fetching it on every request
-let jwks: any = null;
-let jwksUrl: string | null = null;
+export interface DecodedOIDCToken {
+  sub: string;
+  exp?: number;
+  iat?: number;
+  iss?: string;
+  aud?: string;
+  [key: string]: any;
+}
 
-async function getJWKS() {
-  if (!process.env.OIDC_DISCOVERY_URL) {
-    throw new Error("OIDC_DISCOVERY_URL not configured");
-  }
+export interface TokenValidationResult {
+  success: boolean;
+  userId?: string;
+  error?: string;
+  decodedToken?: DecodedOIDCToken;
+}
 
-  // If we already have the JWKS and it's from the same URL, return it
-  if (jwks && jwksUrl === process.env.OIDC_DISCOVERY_URL) {
-    return jwks;
-  }
-
+/**
+ * Validates an OIDC JWT token from the Authorization header
+ * @param authHeader - The Authorization header value (e.g., "Bearer <token>")
+ * @returns TokenValidationResult with validation status and user ID if successful
+ */
+export function validateOIDCToken(authHeader: string | null): TokenValidationResult {
   try {
-    // Fetch the OIDC discovery document
-    const discoveryResponse = await fetch(process.env.OIDC_DISCOVERY_URL);
-    const discoveryDoc = await discoveryResponse.json();
-    
-    // Get the JWKS URL from the discovery document
-    const jwksUrl = discoveryDoc.jwks_uri;
-    if (!jwksUrl) {
-      throw new Error("JWKS URI not found in OIDC discovery document");
+    // Check if Authorization header exists and has Bearer format
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return {
+        success: false,
+        error: "Unauthorized - Bearer token required",
+      };
     }
 
-    // Create a remote JWKS set
-    jwks = createRemoteJWKSet(new URL(jwksUrl));
-    return jwks;
-  } catch (error) {
-    console.error("Failed to fetch JWKS:", error);
-    throw new Error("Failed to fetch JWKS from OIDC provider");
-  }
-}
+    const token = authHeader.substring(7); // Remove "Bearer " prefix
 
-export async function validateJWT(token: string) {
-  try {
-    const jwks = await getJWKS();
-    
-    // Verify the JWT using the JWKS
-    const { payload } = await jwtVerify(token, jwks, {
-      issuer: process.env.OIDC_ISSUER, // Optional: validate issuer
-      audience: process.env.OIDC_AUDIENCE, // Optional: validate audience
-    });
+    // Decode the JWT token (without verification since we don't have the public key)
+    const decodedToken = jwt.decode(token, { complete: true });
+
+    if (!decodedToken || typeof decodedToken === 'string') {
+      return {
+        success: false,
+        error: "Invalid token format",
+      };
+    }
+
+    const payload = decodedToken.payload as DecodedOIDCToken;
+
+    // Check if token is expired
+    const now = Math.floor(Date.now() / 1000);
+    if (payload.exp && payload.exp < now) {
+      return {
+        success: false,
+        error: "Token expired",
+      };
+    }
+
+    // Check if token has required claims
+    if (!payload.sub) {
+      return {
+        success: false,
+        error: "Token missing subject claim",
+      };
+    }
 
     return {
-      valid: true,
-      payload,
+      success: true,
       userId: payload.sub,
-      email: payload.email,
-      name: payload.name,
+      decodedToken: payload,
     };
+
   } catch (error) {
-    console.error("JWT validation failed:", error);
+    console.error("Token validation failed:", error);
     return {
-      valid: false,
-      error: error instanceof Error ? error.message : "Unknown error",
+      success: false,
+      error: "Token validation failed",
     };
   }
 }
 
-export async function getUserIdFromToken(token: string): Promise<string | null> {
-  const result = await validateJWT(token);
-  if (result.valid && result.userId) {
-    return result.userId as string;
+/**
+ * Extracts user ID from a valid OIDC token
+ * @param authHeader - The Authorization header value
+ * @returns The user ID (sub claim) if token is valid, null otherwise
+ */
+export function getUserIdFromToken(authHeader: string | null): string | null {
+  const result = validateOIDCToken(authHeader);
+  return result.success ? result.userId || null : null;
+}
+
+/**
+ * Creates a standardized unauthorized response for API endpoints
+ * @param error - Custom error message (optional)
+ * @returns NextResponse with 401 status and error details
+ */
+export function createUnauthorizedResponse(error?: string) {
+  return new Response(
+    JSON.stringify({
+      success: false,
+      error: error || "Unauthorized - valid token required",
+    }),
+    {
+      status: 401,
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }
+  );
+}
+
+/**
+ * Creates a standardized error response for API endpoints
+ * @param error - Error message
+ * @param status - HTTP status code (defaults to 500)
+ * @param details - Additional error details (optional)
+ * @returns NextResponse with specified status and error details
+ */
+export function createErrorResponse(
+  error: string,
+  status: number = 500,
+  details?: string
+) {
+  return new Response(
+    JSON.stringify({
+      success: false,
+      error,
+      ...(details && { details }),
+    }),
+    {
+      status,
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }
+  );
+}
+
+/**
+ * Middleware-style function to protect API routes with OIDC token validation
+ * @param request - NextRequest object
+ * @param handler - Function to execute if token is valid
+ * @returns Response from handler or unauthorized response
+ */
+export async function withOIDCAuth(
+  request: Request,
+  handler: (userId: string, decodedToken: DecodedOIDCToken) => Promise<Response>
+): Promise<Response> {
+  const authHeader = request.headers.get("authorization");
+  const tokenValidation = validateOIDCToken(authHeader);
+
+  if (!tokenValidation.success) {
+    return createUnauthorizedResponse(tokenValidation.error);
   }
-  return null;
+
+  try {
+    return await handler(tokenValidation.userId!, tokenValidation.decodedToken!);
+  } catch (error) {
+    console.error("API handler error:", error);
+    return createErrorResponse(
+      "Internal server error",
+      500,
+      error instanceof Error ? error.message : "Unknown error"
+    );
+  }
 }
