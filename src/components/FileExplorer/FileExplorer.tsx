@@ -283,8 +283,10 @@ export default function FileExplorer({
             </div>
           )}
 
+          {/* Breadcrumb Navigation and Buttons */}
+          <div className="flex items-center justify-between p-2">
           {/* Breadcrumb Navigation */}
-          <div className="flex font-mono items-center gap-2 p-2 text-sm text-gray-600 dark:text-gray-400">
+            <div className="flex font-mono items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
             <Link
               href={`/?user=${username}`}
               className="hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
@@ -323,20 +325,8 @@ export default function FileExplorer({
             )}
           </div>
 
-          {/* Back Button and Refresh */}
+            {/* Buttons */}
           <div className="flex items-center gap-2">
-            {prefix !== "" && (
-              <Link
-                href={`/?user=${username}&prefix=${
-                  prefix.split("/").slice(0, -2).join("/") + "/"
-                }`}
-                className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                <BackArrowIcon className="w-4 h-4" />
-                Back
-              </Link>
-            )}
-
             <ActionButton
               onClick={fetchS3Objects}
               loading={loading}
