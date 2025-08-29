@@ -7,7 +7,7 @@ import {
   XIcon,
   ChevronUpIcon,
   ChevronDownIcon,
-} from "@/app/graphics";
+} from "@/graphics";
 import { formatFileSize } from "@/app/utils";
 import { useState, useRef, useCallback, useEffect } from "react";
 

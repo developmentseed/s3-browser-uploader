@@ -10,7 +10,7 @@ import {
   FileIcon,
   CancelIcon,
   RetryIcon,
-} from "@/app/graphics";
+} from "@/graphics";
 
 interface FileItemProps {
   item: FileItem;

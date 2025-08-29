@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { UserIcon, WarningIcon } from "../app/graphics";
+import { UserIcon, WarningIcon } from "@/graphics";
 
 interface UsernameWarningProps {
   username?: string;
