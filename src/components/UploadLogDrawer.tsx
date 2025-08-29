@@ -209,10 +209,7 @@ export default function UploadLogDrawer() {
                     <div className="font-mono flex-1 min-w-0 flex items-center gap-4">
                       <div className="min-w-0 flex-1">
                         <div className="font-medium text-gray-900 dark:text-gray-100 truncate">
-                          {upload.file.name}
-                        </div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                          {upload.key}
+                          {upload.file.name} → {upload.key}
                         </div>
                       </div>
 
