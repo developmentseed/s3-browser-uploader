@@ -281,71 +281,65 @@ export default function FileExplorer({
 
           {/* Breadcrumb Navigation and Buttons */}
           <div className="flex items-center justify-between p-2">
-          {/* Breadcrumb Navigation */}
+            {/* Breadcrumb Navigation */}
             <div className="flex font-mono items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-            <Link
-              href={`/?user=${username}`}
-              className="hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
-            >
-              {username}
-            </Link>
-            {prefix !== "" && (
-              <>
-                <span>/</span>
-                {prefix
-                  .split("/")
-                  .filter(Boolean)
-                  .map((segment, index) => {
-                    const newPrefix =
-                      prefix
-                        .split("/")
-                        .filter(Boolean)
-                        .slice(0, index + 1)
-                        .join("/") + "/";
-                    return (
-                      <div key={index} className="flex items-center gap-2">
-                        <Link
-                          href={`/?user=${username}&prefix=${newPrefix}`}
-                          className="hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
-                        >
-                          {segment}
-                        </Link>
-                        {index <
-                          prefix.split("/").filter(Boolean).length - 1 && (
-                          <span>/</span>
-                        )}
-                      </div>
-                    );
-                  })}
-              </>
-            )}
-          </div>
+              <Link
+                href={`/?user=${username}`}
+                className="hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
+              >
+                {username}
+              </Link>
+              {prefix !== "" && (
+                <>
+                  <span>/</span>
+                  {prefix
+                    .split("/")
+                    .filter(Boolean)
+                    .map((segment, index) => {
+                      const newPrefix =
+                        prefix
+                          .split("/")
+                          .filter(Boolean)
+                          .slice(0, index + 1)
+                          .join("/") + "/";
+                      return (
+                        <div key={index} className="flex items-center gap-2">
+                          <Link
+                            href={`/?user=${username}&prefix=${newPrefix}`}
+                            className="hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
+                          >
+                            {segment}
+                          </Link>
+                          {index <
+                            prefix.split("/").filter(Boolean).length - 1 && (
+                            <span>/</span>
+                          )}
+                        </div>
+                      );
+                    })}
+                </>
+              )}
+            </div>
 
             {/* Buttons */}
-          <div className="flex items-center gap-2">
-            <ActionButton
-              onClick={fetchS3Objects}
-              loading={loading}
-              icon={<RefreshIcon className="w-4 h-4" />}
-            >
-              Refresh
-            </ActionButton>
+            <div className="flex items-center gap-2">
+              <ActionButton
+                onClick={fetchS3Objects}
+                loading={loading}
+                icon={<RefreshIcon className="w-4 h-4" />}
+              >
+                Refresh
+              </ActionButton>
 
-            <ActionButton
-              onClick={open}
-              disabled={disabled}
-              icon={<UploadFilesIcon className="w-4 h-4" />}
-            >
-              Upload Files
-            </ActionButton>
-          </div>
-
-          {/* Loading State */}
-          {loading && (
-            <div className="flex items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-white"></div>
+              <ActionButton
+                onClick={open}
+                disabled={disabled}
+                icon={<UploadFilesIcon className="w-4 h-4" />}
+              >
+                Upload Files
+              </ActionButton>
             </div>
-          )}
+          </div>
 
           {/* Error Display */}
           {error && (
