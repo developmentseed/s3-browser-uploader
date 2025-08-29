@@ -284,10 +284,10 @@ export default function FileExplorer({
           )}
 
           {/* Breadcrumb Navigation */}
-          <div className="flex items-center gap-2 p-2 text-sm text-gray-600 dark:text-gray-400">
+          <div className="flex font-mono items-center gap-2 p-2 text-sm text-gray-600 dark:text-gray-400">
             <Link
               href={`/?user=${username}`}
-              className="font-mono hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
+              className="hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
             >
               {username}
             </Link>

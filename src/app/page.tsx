@@ -30,7 +30,7 @@ function HomeContent() {
 
   // Show username warning if no username provided
   if (!username) {
-    return <UsernameWarning username={username} />;
+    return <UsernameWarning />;
   }
 
   // Wrap the authenticated content in CredentialsProvider
@@ -48,11 +48,11 @@ function AuthenticatedContent({
   username: string;
   prefix: string;
 }) {
-  const { loading } = useCredentials();
+  const { loading, error } = useCredentials();
 
   // Show loading message when credentials are being fetched
   if (loading) {
-    return <LoadingScreen username={username} />;
+    return <LoadingScreen username={username} error={error || ""} />;
   }
 
   // Show main content when not loading
@@ -80,7 +80,7 @@ function AuthenticatedContent({
         </div>
 
         {/* Main Content */}
-        <div className="bg-white dark:bg-gray-900">
+        <div className="bg-white dark:bg-black">
           <FileUploadSection prefix={prefix} />
         </div>
       </div>
