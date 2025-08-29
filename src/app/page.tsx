@@ -3,6 +3,7 @@
 import {
   UsernameWarning,
   LoadingScreen,
+  UploadLogDrawer,
   FileExplorer,
 } from "@/components";
 import {
@@ -78,6 +79,7 @@ function AuthenticatedContent({
           {credentials && bucket && (
             <UploadProvider credentials={credentials} bucket={bucket}>
               <FileExplorer prefix={prefix} />
+              <UploadLogDrawer />
             </UploadProvider>
           )}
         </div>
