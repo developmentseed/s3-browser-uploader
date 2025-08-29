@@ -6,6 +6,7 @@ import {
   useState,
   useCallback,
   ReactNode,
+  useRef,
 } from "react";
 import { Credentials } from "./CredentialsContext";
 import { Upload } from "@aws-sdk/lib-storage";
@@ -27,6 +28,7 @@ interface UploadContextType {
   uploadProgress: UploadProgress[];
   uploadFiles: (files: File[], prefix: string) => Promise<void>;
   cancelUpload: (id: string) => void;
+  cancelAllUploads: () => void;
   retryUpload: (id: string) => Promise<void>;
   clearCompleted: () => void;
   clearErrors: () => void;
@@ -48,6 +50,10 @@ export function UploadProvider({
   bucket: string;
 }) {
   const [uploadProgress, setUploadProgress] = useState<UploadProgress[]>([]);
+  const uploadProgressRef = useRef<UploadProgress[]>([]);
+
+  // Keep ref in sync with state
+  uploadProgressRef.current = uploadProgress;
 
   const isUploading = uploadProgress.some((up) => up.status === "uploading");
   const hasActiveUploads = uploadProgress.some(
@@ -91,6 +97,15 @@ export function UploadProvider({
       // Process uploads sequentially
       for (const progress of initialProgress) {
         try {
+          // Check if this upload has been cancelled before processing
+          const currentProgress = uploadProgressRef.current.find(
+            (up) => up.id === progress.id
+          );
+          console.log(`Current progress: ${currentProgress?.status}`);
+          if (currentProgress?.status === "cancelled") {
+            continue; // Skip cancelled uploads
+          }
+
           // Update status to uploading
           setUploadProgress((prev) =>
             prev.map((up) =>
@@ -177,19 +192,21 @@ export function UploadProvider({
 
   const cancelUpload = useCallback((id: string) => {
     setUploadProgress((prev) =>
-      prev.map((up) => {
-        if (up.id === id) {
-          if (up.status === "uploading" && up.upload) {
-            up.upload.abort();
-          }
-          return {
-            ...up,
-            status: "cancelled" as const,
-            error: "Upload cancelled",
-          };
-        }
-        return up;
-      })
+      prev.map((up) =>
+        up.id === id && ["queued", "uploading"].includes(up.status)
+          ? markUploadAsCancelled(up)
+          : up
+      )
+    );
+  }, []);
+
+  const cancelAllUploads = useCallback(() => {
+    setUploadProgress((prev) =>
+      prev.map((up) =>
+        ["queued", "uploading"].includes(up.status)
+          ? markUploadAsCancelled(up)
+          : up
+      )
     );
   }, []);
 
@@ -236,6 +253,7 @@ export function UploadProvider({
         uploadProgress,
         uploadFiles,
         cancelUpload,
+        cancelAllUploads,
         retryUpload,
         clearCompleted,
         clearErrors,
@@ -256,4 +274,18 @@ export function useUpload() {
     throw new Error("useUpload must be used within an UploadProvider");
   }
   return context;
+}
+
+function markUploadAsCancelled(upload: UploadProgress): UploadProgress {
+  console.log(
+    `Cancelling upload: ${upload.file.name} (${upload.id} - ${upload.status})`
+  );
+  if (upload.status === "uploading" && upload.upload) {
+    upload.upload.abort();
+  }
+  return {
+    ...upload,
+    status: "cancelled",
+    error: "Upload cancelled",
+  };
 }

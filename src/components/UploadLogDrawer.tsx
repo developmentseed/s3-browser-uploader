@@ -19,6 +19,7 @@ export default function UploadLogDrawer() {
     removeCancelled,
     clearAllUploads,
     cancelUpload,
+    cancelAllUploads,
     retryUpload,
   } = useUpload();
 
@@ -307,6 +308,16 @@ export default function UploadLogDrawer() {
                 </div>
 
                 <div className="flex items-center gap-2">
+                  {(queuedCount > 0 || uploadingCount > 0) && (
+                    <button
+                      onClick={cancelAllUploads}
+                      className="px-2 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700"
+                      title="Cancel all queued and in-progress uploads"
+                    >
+                      Cancel All
+                    </button>
+                  )}
+
                   {completedCount > 0 && (
                     <button
                       onClick={clearCompleted}
