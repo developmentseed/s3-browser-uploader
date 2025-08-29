@@ -53,8 +53,12 @@ const FileItem = ({ item }: { item: FileItem }) => {
       className={`flex items-center gap-3 px-2 py-1.5 rounded transition-colors ${
         item.isUpload && item.uploadStatus === "uploading"
           ? "bg-orange-50 dark:bg-orange-950/20"
+          : item.isUpload && item.uploadStatus === "queued"
+          ? "bg-blue-50 dark:bg-blue-950/20"
           : item.isUpload && item.uploadStatus === "error"
           ? "bg-red-50 dark:bg-red-950/20"
+          : item.isUpload && item.uploadStatus === "cancelled"
+          ? "bg-gray-50 dark:bg-gray-950/20"
           : "hover:bg-gray-50 dark:hover:bg-gray-900"
       }`}
     >
@@ -78,6 +82,8 @@ const FileItem = ({ item }: { item: FileItem }) => {
             <span className="text-orange-600 dark:text-orange-400">
               {Math.round(item.uploadProgress || 0)}%
             </span>
+          ) : item.isUpload && item.uploadStatus === "queued" ? (
+            <span className="text-blue-600 dark:text-blue-400">Queued</span>
           ) : item.isUpload && item.uploadStatus === "error" ? (
             <span
               className="text-red-600 dark:text-red-400"
@@ -85,6 +91,8 @@ const FileItem = ({ item }: { item: FileItem }) => {
             >
               Failed
             </span>
+          ) : item.isUpload && item.uploadStatus === "cancelled" ? (
+            <span className="text-gray-600 dark:text-gray-400">Cancelled</span>
           ) : (
             <span title={formatDate(item.lastModified).absolute}>
               {formatDate(item.lastModified).relative}
@@ -108,9 +116,10 @@ const FileItem = ({ item }: { item: FileItem }) => {
       {/* Action buttons for uploads */}
       {item.isUpload && (
         <div className="flex-shrink-0 flex items-center gap-1">
-          {item.uploadStatus === "uploading" && (
+          {(item.uploadStatus === "uploading" ||
+            item.uploadStatus === "queued") && (
             <button
-              onClick={() => item.uploadId && cancelUpload(item.uploadId)}
+              onClick={() => cancelUpload(item.uploadId || item.key)}
               className="p-1 rounded hover:bg-red-100 dark:hover:bg-red-900/20 transition-colors"
               title="Cancel upload"
             >
@@ -118,9 +127,10 @@ const FileItem = ({ item }: { item: FileItem }) => {
             </button>
           )}
 
-          {item.uploadStatus === "error" && (
+          {(item.uploadStatus === "error" ||
+            item.uploadStatus === "cancelled") && (
             <button
-              onClick={() => item.uploadId && retryUpload(item.uploadId)}
+              onClick={() => retryUpload(item.uploadId || item.key)}
               className="p-1 rounded hover:bg-blue-100 dark:hover:bg-blue-900/20 transition-colors"
               title="Retry upload"
             >
@@ -145,14 +155,31 @@ const FileDisplayIcon = ({ item }: { item: FileItem }) => {
     return <FolderIcon className="w-5 h-5 text-blue-600 dark:text-blue-400" />;
   }
 
-  if (item.isUpload && item.uploadStatus === "uploading") {
-    return (
-      <UploadIcon className="w-5 h-5 text-orange-600 dark:text-orange-400" />
-    );
-  }
-
-  if (item.isUpload && item.uploadStatus === "error") {
-    return <ErrorIcon className="w-5 h-5 text-red-600 dark:text-red-400" />;
+  if (item.isUpload) {
+    switch (item.uploadStatus) {
+      case "queued":
+        return (
+          <UploadIcon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+        );
+      case "uploading":
+        return (
+          <UploadIcon className="w-5 h-5 text-orange-600 dark:text-orange-400" />
+        );
+      case "error":
+        return <ErrorIcon className="w-5 h-5 text-red-600 dark:text-red-400" />;
+      case "cancelled":
+        return (
+          <CancelIcon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+        );
+      case "completed":
+        return (
+          <FileIcon className="w-5 h-5 text-green-600 dark:text-green-400" />
+        );
+      default:
+        return (
+          <FileIcon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+        );
+    }
   }
 
   return <FileIcon className="w-5 h-5 text-gray-600 dark:text-gray-400" />;

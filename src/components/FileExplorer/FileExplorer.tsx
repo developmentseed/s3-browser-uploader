@@ -23,7 +23,7 @@ export interface FileItem {
   size: number;
   isDirectory: boolean;
   isUpload: boolean;
-  uploadStatus?: "uploading" | "completed" | "error";
+  uploadStatus?: "queued" | "uploading" | "completed" | "error" | "cancelled";
   uploadProgress?: number;
   uploadError?: string;
   uploadId?: string;
@@ -68,7 +68,7 @@ export default function FileExplorer({
   // Refresh file list when ALL uploads complete
   useEffect(() => {
     const hasActiveUploads = uploadProgress.some(
-      (up) => up.status === "uploading"
+      (up) => up.status === "uploading" || up.status === "queued"
     );
     const hasCompletedUploads = uploadProgress.some(
       (up) => up.status === "completed"

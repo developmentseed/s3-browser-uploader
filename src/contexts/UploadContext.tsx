@@ -17,9 +17,10 @@ interface UploadProgress {
   key: string;
   uploadedBytes: number;
   totalBytes: number;
-  status: "uploading" | "completed" | "error";
+  status: "queued" | "uploading" | "completed" | "error" | "cancelled";
   error?: string;
   upload?: Upload;
+  queuePosition?: number;
 }
 
 interface UploadContextType {
@@ -29,6 +30,7 @@ interface UploadContextType {
   retryUpload: (id: string) => Promise<void>;
   clearCompleted: () => void;
   clearErrors: () => void;
+  removeCancelled: () => void;
   clearAllUploads: () => void;
   isUploading: boolean;
   hasActiveUploads: boolean;
@@ -73,21 +75,29 @@ export function UploadProvider({
       // Normalize prefix to ensure it ends with slash
       const normalizedPrefix = prefix.endsWith("/") ? prefix : `${prefix}/`;
 
-      // Initialize upload progress for each file
-      const initialProgress: UploadProgress[] = files.map((file) => ({
+      // Initialize upload progress for each file as queued
+      const initialProgress: UploadProgress[] = files.map((file, index) => ({
         id: `${Date.now()}-${Math.random()}`,
         file,
         key: `${normalizedPrefix}${file.name}`,
         uploadedBytes: 0,
         totalBytes: file.size,
-        status: "uploading",
+        status: "queued",
+        queuePosition: index + 1,
       }));
 
       setUploadProgress((prev) => [...prev, ...initialProgress]);
 
-      // Upload each file
-      const promises = initialProgress.map(async (progress) => {
+      // Process uploads sequentially
+      for (const progress of initialProgress) {
         try {
+          // Update status to uploading
+          setUploadProgress((prev) =>
+            prev.map((up) =>
+              up.id === progress.id ? { ...up, status: "uploading" } : up
+            )
+          );
+
           const upload = new Upload({
             client: s3Client,
             params: {
@@ -142,24 +152,24 @@ export function UploadProvider({
             errorMessage = error.message;
           }
 
-          // Mark as error
+          // Check if this is a cancellation-related error from AWS
+          const isCancellationError = errorMessage.includes("aborted");
+
+          // Mark as cancelled if it's a cancellation error, otherwise as error
+          const status = isCancellationError ? "cancelled" : "error";
+
           setUploadProgress((prev) =>
             prev.map((up) =>
               up.id === progress.id
                 ? {
                     ...up,
-                    status: "error" as const,
+                    status,
                     error: errorMessage,
                   }
                 : up
             )
           );
         }
-      });
-
-      // Upload files sequentially to avoid overwhelming the system
-      for (const promise of promises) {
-        await promise;
       }
     },
     [credentials, bucket]
@@ -168,9 +178,15 @@ export function UploadProvider({
   const cancelUpload = useCallback((id: string) => {
     setUploadProgress((prev) =>
       prev.map((up) => {
-        if (up.id === id && up.upload && up.status === "uploading") {
-          up.upload.abort();
-          return { ...up, status: "error" as const, error: "Upload cancelled" };
+        if (up.id === id) {
+          if (up.status === "uploading" && up.upload) {
+            up.upload.abort();
+          }
+          return {
+            ...up,
+            status: "cancelled" as const,
+            error: "Upload cancelled",
+          };
         }
         return up;
       })
@@ -180,9 +196,13 @@ export function UploadProvider({
   const retryUpload = useCallback(
     async (id: string) => {
       const uploadItem = uploadProgress.find((up) => up.id === id);
-      if (!uploadItem || uploadItem.status !== "error") return;
+      if (
+        !uploadItem ||
+        (uploadItem.status !== "error" && uploadItem.status !== "cancelled")
+      )
+        return;
 
-      // Remove the failed upload and retry with the same file
+      // Remove the failed/cancelled upload and retry with the same file
       setUploadProgress((prev) => prev.filter((up) => up.id !== id));
 
       // Extract prefix from the key (remove filename)
@@ -202,6 +222,10 @@ export function UploadProvider({
     setUploadProgress((prev) => prev.filter((up) => up.status !== "error"));
   }, []);
 
+  const removeCancelled = useCallback(() => {
+    setUploadProgress((prev) => prev.filter((up) => up.status !== "cancelled"));
+  }, []);
+
   const clearAllUploads = useCallback(() => {
     setUploadProgress([]);
   }, []);
@@ -215,6 +239,7 @@ export function UploadProvider({
         retryUpload,
         clearCompleted,
         clearErrors,
+        removeCancelled,
         clearAllUploads,
         isUploading,
         hasActiveUploads,

@@ -16,6 +16,7 @@ export default function UploadLogDrawer() {
     uploadProgress,
     clearCompleted,
     clearErrors,
+    removeCancelled,
     clearAllUploads,
     cancelUpload,
     retryUpload,
@@ -80,6 +81,12 @@ export default function UploadLogDrawer() {
   const uploadingCount = uploadProgress.filter(
     (up) => up.status === "uploading"
   ).length;
+  const queuedCount = uploadProgress.filter(
+    (up) => up.status === "queued"
+  ).length;
+  const cancelledCount = uploadProgress.filter(
+    (up) => up.status === "cancelled"
+  ).length;
 
   const formatProgress = (uploaded: number, total: number) => {
     if (total === 0) return "0%";
@@ -98,6 +105,12 @@ export default function UploadLogDrawer() {
             </div>
           )}
 
+          {queuedCount > 0 && (
+            <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400">
+              <span>{queuedCount} queued</span>
+            </div>
+          )}
+
           {completedCount > 0 && (
             <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
               <CheckIcon className="w-3 h-3" />
@@ -109,6 +122,12 @@ export default function UploadLogDrawer() {
             <div className="flex items-center gap-2 text-red-600 dark:text-red-400">
               <XIcon className="w-3 h-3" />
               <span>{errorCount} failed</span>
+            </div>
+          )}
+
+          {cancelledCount > 0 && (
+            <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+              <span>{cancelledCount} cancelled</span>
             </div>
           )}
         </div>
@@ -167,6 +186,11 @@ export default function UploadLogDrawer() {
                   >
                     {/* Status Icon */}
                     <div className="flex-shrink-0">
+                      {upload.status === "queued" && (
+                        <div className="w-4 h-4 text-blue-600 dark:text-blue-400">
+                          <span className="text-xs">⏳</span>
+                        </div>
+                      )}
                       {upload.status === "uploading" && (
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-black dark:border-black"></div>
                       )}
@@ -175,6 +199,9 @@ export default function UploadLogDrawer() {
                       )}
                       {upload.status === "error" && (
                         <XIcon className="w-4 h-4 text-red-600 dark:text-red-400" />
+                      )}
+                      {upload.status === "cancelled" && (
+                        <CancelIcon className="w-4 h-4 text-gray-600 dark:text-gray-400" />
                       )}
                     </div>
 
@@ -196,6 +223,12 @@ export default function UploadLogDrawer() {
 
                     {/* Progress or Status - Compact */}
                     <div className="flex items-center gap-3 flex-shrink-0">
+                      {upload.status === "queued" && (
+                        <span className="text-xs text-blue-600 dark:text-blue-400 font-medium">
+                          Queued
+                        </span>
+                      )}
+
                       {upload.status === "uploading" && (
                         <div className="flex items-center gap-2 min-w-0">
                           <div className="w-16 bg-gray-200 dark:bg-gray-600 rounded-full h-1.5">
@@ -234,11 +267,18 @@ export default function UploadLogDrawer() {
                           </div>
                         </div>
                       )}
+
+                      {upload.status === "cancelled" && (
+                        <span className="text-xs text-gray-600 dark:text-gray-400 font-medium">
+                          Cancelled
+                        </span>
+                      )}
                     </div>
 
                     {/* Action Buttons */}
                     <div className="flex items-center gap-1 flex-shrink-0">
-                      {upload.status === "uploading" && (
+                      {(upload.status === "uploading" ||
+                        upload.status === "queued") && (
                         <button
                           onClick={() => cancelUpload(upload.id)}
                           className="p-1 text-gray-400 hover:text-red-600 dark:hover:text-red-400"
@@ -248,7 +288,8 @@ export default function UploadLogDrawer() {
                         </button>
                       )}
 
-                      {upload.status === "error" && (
+                      {(upload.status === "error" ||
+                        upload.status === "cancelled") && (
                         <button
                           onClick={() => retryUpload(upload.id)}
                           className="px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700"
@@ -284,6 +325,15 @@ export default function UploadLogDrawer() {
                       className="px-2 py-1 text-xs bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-300 dark:hover:bg-gray-500"
                     >
                       Clear Errors
+                    </button>
+                  )}
+
+                  {cancelledCount > 0 && (
+                    <button
+                      onClick={removeCancelled}
+                      className="px-2 py-1 text-xs bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-300 dark:hover:bg-gray-500"
+                    >
+                      Clear Cancelled
                     </button>
                   )}
                 </div>
