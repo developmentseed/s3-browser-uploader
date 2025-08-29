@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useDropzone } from "react-dropzone";
-import { useCredentials } from "@/contexts/CredentialsContext";
+import { useAuth } from "@/contexts";
 import { useFS } from "@/contexts/FSContext";
 import { ActionButton } from "../ActionButton";
 import { FileDisplay } from "./FileDisplay";
@@ -43,7 +43,7 @@ export default function FileExplorer({
   disabled = false,
   prefix,
 }: FileExplorerProps) {
-  const { credentials, bucket } = useCredentials();
+  const { s3Credentials, s3Bucket } = useAuth();
   const { uploadFiles, uploadProgress } = useUpload();
   const { preferences } = usePreferences();
   const { listObjects, deleteObject } = useFS();
@@ -67,8 +67,22 @@ export default function FileExplorer({
     }
 
     try {
-      await deleteObject(item.key);
+      console.log("Attempting to delete file:", item);
+      console.log("Available objects:", objects);
 
+      // Find the corresponding FSObject to get the key
+      const fsObject = objects.find((obj) => obj.key === item.key);
+      if (!fsObject) {
+        console.error("File not found in file system:", item.key);
+        throw new Error("File not found in file system");
+      }
+
+      console.log("Found FSObject:", fsObject);
+      console.log("Deleting with key:", fsObject.key);
+
+      await deleteObject(fsObject.key);
+
+      console.log("Delete successful, removing from local state");
       // Remove the item from local state
       removeItemFromState(item.key);
     } catch (error) {
@@ -90,10 +104,10 @@ export default function FileExplorer({
 
   // Fetch file system objects when credentials or prefix changes
   useEffect(() => {
-    if (credentials && bucket) {
+    if (s3Credentials && s3Bucket) {
       fetchFileSystemObjects();
     }
-  }, [credentials, bucket, prefix, listObjects]);
+  }, [s3Credentials, s3Bucket, prefix, listObjects]);
 
   // Refresh file list when ALL uploads complete
   useEffect(() => {
@@ -115,7 +129,7 @@ export default function FileExplorer({
   }, [uploadProgress, listObjects]);
 
   const fetchFileSystemObjects = async () => {
-    if (!credentials || !bucket) return;
+    if (!s3Credentials || !s3Bucket) return;
 
     setLoading(true);
     setError(null);
@@ -183,7 +197,7 @@ export default function FileExplorer({
     return a.name.localeCompare(b.name);
   });
 
-  if (!credentials || !bucket) {
+  if (!s3Credentials || !s3Bucket) {
     return (
       <div className="text-center py-8 text-gray-500 dark:text-gray-400">
         Uh oh, something went wrong when fetching your credentials. Please try
@@ -193,15 +207,15 @@ export default function FileExplorer({
   }
 
   return (
-    <div className="min-h-screen space-y-4 flex flex-col" {...getRootProps()}>
+    <div className="space-y-4" {...getRootProps()}>
       {/* File System Explorer - shown when not disabled */}
       {!disabled && (
-        <div className={`flex-1 space-y-4 ${className} relative`}>
+        <div className={`space-y-4 ${className} relative`}>
           {/* Drag and Drop Overlay */}
           {isDragActive && (
             <div
               className={`
-                absolute inset-0 
+                ${className} absolute inset-0 
                 bg-blue-500/10 dark:bg-blue-400/10 
                 border-2 border-dashed border-blue-500 dark:border-blue-400 
                 z-10 flex items-center justify-center`}

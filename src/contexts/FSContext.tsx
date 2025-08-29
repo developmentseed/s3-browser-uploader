@@ -2,10 +2,10 @@
 
 import React, { createContext, useContext, useCallback } from "react";
 import { S3Client, ListObjectsV2Command, DeleteObjectCommand } from "@aws-sdk/client-s3";
-import { useCredentials } from "./CredentialsContext";
+import { useAuth } from "./AuthContext";
 
 interface FSObject {
-  key: string;
+  key: string; // Full S3 key (with prefix)
   lastModified: string;
   size: number;
   isDirectory: boolean;
@@ -32,20 +32,20 @@ interface FSProviderProps {
 }
 
 export const FSProvider: React.FC<FSProviderProps> = ({ children }) => {
-  const { credentials, bucket } = useCredentials();
+  const { s3Credentials, s3Bucket } = useAuth();
 
   const createClient = useCallback((): S3Client | null => {
-    if (!credentials || !bucket) return null;
+    if (!s3Credentials || !s3Bucket) return null;
 
     return new S3Client({
-      region: credentials.region,
+      region: s3Credentials.region,
       credentials: {
-        accessKeyId: credentials.accessKeyId,
-        secretAccessKey: credentials.secretAccessKey,
-        sessionToken: credentials.sessionToken,
+        accessKeyId: s3Credentials.accessKeyId,
+        secretAccessKey: s3Credentials.secretAccessKey,
+        sessionToken: s3Credentials.sessionToken,
       },
     });
-  }, [credentials, bucket]);
+  }, [s3Credentials, s3Bucket]);
 
   const listObjects = useCallback(
     async (prefix: string): Promise<FSObject[]> => {
@@ -57,7 +57,7 @@ export const FSProvider: React.FC<FSProviderProps> = ({ children }) => {
       try {
         // List objects with the specified prefix
         const command = new ListObjectsV2Command({
-          Bucket: bucket!,
+          Bucket: s3Bucket!,
           Prefix: prefix.endsWith("/") ? prefix : `${prefix}/`,
           Delimiter: "/",
           MaxKeys: 1000,
@@ -86,12 +86,11 @@ export const FSProvider: React.FC<FSProviderProps> = ({ children }) => {
         if (response.Contents) {
           response.Contents.forEach((content) => {
             if (content.Key && content.Key !== prefix) {
-              // Remove username from the key for display
-              const displayKey = content.Key.replace(`${prefix}/`, "");
               objects.push({
-                key: displayKey,
+                key: content.Key,
                 lastModified:
-                  content.LastModified?.toISOString() || new Date().toISOString(),
+                  content.LastModified?.toISOString() ||
+                  new Date().toISOString(),
                 size: content.Size || 0,
                 isDirectory: false,
               });
@@ -114,7 +113,7 @@ export const FSProvider: React.FC<FSProviderProps> = ({ children }) => {
         throw new Error("Failed to fetch file system objects");
       }
     },
-    [createClient, bucket]
+    [createClient, s3Bucket]
   );
 
   const deleteObject = useCallback(
@@ -127,7 +126,7 @@ export const FSProvider: React.FC<FSProviderProps> = ({ children }) => {
       try {
         // Delete the object
         const command = new DeleteObjectCommand({
-          Bucket: bucket!,
+          Bucket: s3Bucket!,
           Key: key,
         });
 
@@ -137,7 +136,7 @@ export const FSProvider: React.FC<FSProviderProps> = ({ children }) => {
         throw new Error("Failed to delete object");
       }
     },
-    [createClient, bucket]
+    [createClient, s3Bucket]
   );
 
   const value: FSContextType = {

@@ -1,11 +1,12 @@
 "use client";
 
 interface LoadingScreenProps {
-  username: string;
-  error: string;
+  error?: boolean;
+  children?: React.ReactNode;
 }
 
-export default function LoadingScreen({ username, error }: LoadingScreenProps) {
+export default function LoadingScreen({ error, children }: LoadingScreenProps) {
+  const color = error ? "red" : "gray";
   return (
     <div className="min-h-screen bg-white dark:bg-black flex items-center justify-center">
       <div className="mx-auto max-w-4xl px-6">
@@ -16,19 +17,12 @@ export default function LoadingScreen({ username, error }: LoadingScreenProps) {
           </div>
 
           <h1 className="mb-4 font-mono text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
-            Setting up your session
+            Fetching your session
           </h1>
 
-          {error ? (
-            <p className="text-lg text-red-600 dark:text-red-400">{error}</p>
-          ) : (
-            <p className="text-lg text-gray-600 dark:text-gray-400">
-              Getting credentials for{" "}
-              <span className="font-mono font-semibold text-gray-900 dark:text-white">
-                {username}
-              </span>
-            </p>
-          )}
+          <p className={`text-lg text-${color}-600 dark:text-${color}-400`}>
+            {children}
+          </p>
         </div>
       </div>
     </div>

@@ -50,6 +50,37 @@ A secure file upload solution powered by AWS S3 with multipart upload support an
 6. Files appear in the explorer once uploads complete
 7. Delete files by clicking the trash icon next to any file (with confirmation dialog)
 
+## Authentication
+
+This application uses NextAuth.js with OIDC (OpenID Connect) authentication for secure access. The system validates JWTs directly against your OIDC provider's public keys.
+
+### Environment Variables
+
+Create a `.env.local` file with:
+
+```bash
+# OIDC Configuration
+OIDC_DISCOVERY_URL=https://your-oidc-provider/.well-known/openid_configuration
+OIDC_CLIENT_ID=your-oidc-client-id
+OIDC_ISSUER=https://your-oidc-provider  # Optional: for JWT issuer validation
+OIDC_AUDIENCE=your-app-audience  # Optional: for JWT audience validation
+
+# AWS Configuration
+AWS_REGION=us-east-1
+S3_BUCKET_NAME=your-s3-bucket-name
+IAM_ROLE_ARN=arn:aws:iam::YOUR_ACCOUNT_ID:role/YOUR_ROLE_NAME
+```
+
+### OIDC Provider Setup
+
+1. Create a new application/client in your OIDC provider (Auth0, Okta, Keycloak, etc.)
+2. Set client type to "Public" or "SPA"
+3. Configure redirect URIs:
+   - Development: `http://localhost:3000/api/auth/callback/oidc`
+   - Production: `https://yourdomain.com/api/auth/callback/oidc`
+4. Enable scopes: `openid`, `profile`, `email`
+5. Ensure PKCE is enabled (default for public clients)
+
 ## AWS Configuration Requirements
 
 ### S3 Bucket CORS Configuration

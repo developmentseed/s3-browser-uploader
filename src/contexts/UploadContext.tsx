@@ -8,7 +8,7 @@ import {
   ReactNode,
   useRef,
 } from "react";
-import { Credentials } from "./CredentialsContext";
+import { S3Credentials } from "./AuthContext";
 import { usePreferences } from "./PreferencesContext";
 import { Upload } from "@aws-sdk/lib-storage";
 import { S3Client } from "@aws-sdk/client-s3";
@@ -47,7 +47,7 @@ export function UploadProvider({
   bucket,
 }: {
   children: ReactNode;
-  credentials: Credentials;
+  credentials: S3Credentials;
   bucket: string;
 }) {
   const { preferences } = usePreferences();
@@ -115,6 +115,8 @@ export function UploadProvider({
             )
           );
 
+          const chunkSize = 1024 * 1024 * 5;
+          const isLargeFile = progress.file.size > chunkSize;
           const upload = new Upload({
             client: s3Client,
             params: {
@@ -122,10 +124,14 @@ export function UploadProvider({
               Key: progress.key,
               Body: progress.file,
               ContentType: progress.file.type || "application/octet-stream",
-              ChecksumAlgorithm: "CRC32",
+              // Only use checksums for files larger than 5MB to avoid issues with small files
+              ...(isLargeFile && {
+                ChecksumAlgorithm: "CRC32",
+              }),
             },
             queueSize: preferences.uploadQueueSize,
-            partSize: 1024 * 1024 * 5, // 5MB chunks
+            // Only use multipart for files larger than 5MB
+            partSize: isLargeFile ? chunkSize : undefined,
             leavePartsOnError: false,
           });
 

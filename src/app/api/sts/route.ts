@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { STSClient, AssumeRoleCommand } from "@aws-sdk/client-sts";
+import { getServerSession } from "next-auth";
+import { authOptions } from "../auth/[...nextauth]/route";
 
 // Configuration from environment variables
 const BUCKET_NAME = process.env.S3_BUCKET_NAME || "24hr-tmp";
@@ -9,18 +11,20 @@ const ROLE_ARN =
 
 export async function POST(request: NextRequest) {
   try {
-    // TODO: Username would actually come from validated JWT
-    const { username } = await request.json();
+    // Use NextAuth's getServerSession for proper session validation
+    const session = await getServerSession(authOptions);
 
-    if (!username) {
+    if (!session?.user?.id) {
       return NextResponse.json(
         {
           success: false,
-          error: "Username is required",
+          error: "Unauthorized - valid session required",
         },
-        { status: 400 }
+        { status: 401 }
       );
     }
+
+    const userId = session.user.id;
 
     // Create STS client
     const stsClient = new STSClient({
@@ -37,7 +41,7 @@ export async function POST(request: NextRequest) {
           Resource: [`arn:aws:s3:::${BUCKET_NAME}`],
           Condition: {
             StringLike: {
-              "s3:prefix": [`${username}/*`, `${username}`],
+              "s3:prefix": [`${userId}/*`, `${userId}`],
             },
           },
         },
@@ -51,7 +55,7 @@ export async function POST(request: NextRequest) {
             "s3:ListMultipartUploadParts",
             "s3:PutObjectAcl",
           ],
-          Resource: [`arn:aws:s3:::${BUCKET_NAME}/${username}/*`],
+          Resource: [`arn:aws:s3:::${BUCKET_NAME}/${userId}/*`],
         },
       ],
     };
@@ -59,7 +63,7 @@ export async function POST(request: NextRequest) {
     // Assume role with the policy
     const assumeRoleCommand = new AssumeRoleCommand({
       RoleArn: ROLE_ARN,
-      RoleSessionName: `s3-upload-${username}-${Date.now()}`,
+      RoleSessionName: `s3-upload-${userId}-${Date.now()}`,
       DurationSeconds: 3600, // 1 hour
       Policy: JSON.stringify(policyDocument),
     });
@@ -81,7 +85,7 @@ export async function POST(request: NextRequest) {
         region: process.env.AWS_REGION || "us-east-1",
       },
       bucket: BUCKET_NAME,
-      prefix: `${username}/`,
+      prefix: `${userId}/`,
     });
   } catch (error) {
     console.error("Error getting STS credentials:", error);
@@ -102,6 +106,7 @@ export async function GET() {
   return NextResponse.json({
     message: "STS credentials endpoint",
     method: "POST",
-    description: "Send a POST request to get temporary AWS credentials",
+    description:
+      "Send a POST request with Bearer token to get temporary AWS credentials",
   });
 }
