@@ -170,66 +170,52 @@ export default function FileExplorer({
   };
 
   // Create unified file list combining S3 objects and uploads
-  const getUnifiedFileList = (): FileItem[] => {
-    const fileItems: FileItem[] = [];
-
-    // Add S3 objects
-    objects.forEach((obj) => {
-      fileItems.push({
-        key: obj.key,
-        name: getDisplayName(obj.key),
-        lastModified: obj.lastModified,
-        size: obj.size,
-        isDirectory: obj.isDirectory,
-        isUpload: false,
-      });
-    });
-
-    // Add uploads
-    uploadProgress.forEach((upload) => {
-      const uploadKey = upload.key;
-      const uploadName = getDisplayName(uploadKey);
-
-      // Check if this upload has a corresponding S3 object (completed upload)
-      const existingS3Object = objects.find((obj) => obj.key === uploadKey);
-
-      if (existingS3Object) {
-        // Upload completed, show as regular file with recent timestamp
-        fileItems.push({
-          key: uploadKey,
-          name: uploadName,
-          lastModified: new Date().toISOString(), // Very recent timestamp
-          size: upload.totalBytes,
-          isDirectory: false,
-          isUpload: false, // No longer an upload
-        });
-      } else {
-        // Still uploading or failed
-        fileItems.push({
-          key: uploadKey,
-          name: uploadName,
-          lastModified: new Date().toISOString(),
-          size: upload.totalBytes,
-          isDirectory: false,
-          isUpload: true,
-          uploadStatus: upload.status,
-          uploadProgress:
-            upload.status === "uploading"
-              ? (upload.uploadedBytes / upload.totalBytes) * 100
-              : undefined,
-          uploadError: upload.error,
-        });
-      }
-    });
-
-    // Sort alphabetically, directories first
-    return fileItems.sort((a, b) => {
-      if (a.isDirectory !== b.isDirectory) {
-        return a.isDirectory ? -1 : 1;
-      }
-      return a.name.localeCompare(b.name);
-    });
-  };
+  const unifiedFileList: FileItem[] = Object.values(
+    Object.fromEntries([
+      // S3 Objects
+      ...objects.map((obj): [string, FileItem] => [
+        obj.key,
+        {
+          key: obj.key,
+          name: getDisplayName(obj.key),
+          lastModified: obj.lastModified,
+          size: obj.size,
+          isDirectory: obj.isDirectory,
+          isUpload: false,
+        },
+      ]),
+      // Uploads in Prefix (possibly overwriting existing S3 objects)
+      ...uploadProgress
+        .filter(
+          (upload) =>
+            upload.key.startsWith(prefix) &&
+            !upload.key.slice(prefix.length).includes("/")
+        )
+        .map((upload): [string, FileItem] => [
+          upload.key,
+          {
+            key: upload.key,
+            name: getDisplayName(upload.key),
+            lastModified: new Date().toISOString(),
+            size: upload.totalBytes,
+            isDirectory: false,
+            isUpload: true,
+            uploadStatus: upload.status,
+            uploadProgress:
+              upload.status === "uploading"
+                ? (upload.uploadedBytes / upload.totalBytes) * 100
+                : undefined,
+            uploadError: upload.error,
+            uploadId: upload.id,
+          },
+        ]),
+    ])
+  ).sort((a, b) => {
+    if (a.isDirectory !== b.isDirectory) {
+      return a.isDirectory ? -1 : 1;
+    }
+    return a.name.localeCompare(b.name);
+  });
 
   if (!credentials || !bucket) {
     return (
@@ -323,12 +309,12 @@ export default function FileExplorer({
 
           {/* File List */}
           <div className="space-y-0.5 font-mono">
-            {getUnifiedFileList().length === 0 ? (
+            {unifiedFileList.length === 0 ? (
               <div className="text-center py-8 text-gray-500 dark:text-gray-400">
                 This directory is empty
               </div>
             ) : (
-              getUnifiedFileList().map((item) => (
+              unifiedFileList.map((item) => (
                 <FileDisplay key={item.key} item={item} />
               ))
             )}
