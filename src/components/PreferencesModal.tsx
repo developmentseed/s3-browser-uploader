@@ -65,7 +65,7 @@ export function PreferencesModal({ isOpen, onClose }: PreferencesModalProps) {
                 placeholder="Enter queue size"
               />
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                Number of files that can be uploaded simultaneously
+                Number of file chunks that can be uploaded simultaneously
               </p>
             </div>
           </div>
@@ -80,17 +80,17 @@ export function PreferencesModal({ isOpen, onClose }: PreferencesModalProps) {
                 {
                   value: "relative",
                   label: "Relative",
-                  example: '2 hours ago',
+                  example: "2 hours ago",
                 },
                 {
                   value: "absolute",
                   label: "Absolute",
-                  example: 'Dec 15, 2023, 2:30 PM',
+                  example: "Dec 15, 2023, 2:30 PM",
                 },
                 {
                   value: "iso8601",
                   label: "ISO8601",
-                  example: '2023-12-15T14:30:00.000Z',
+                  example: "2023-12-15T14:30:00.000Z",
                 },
               ].map(({ value, label, example }) => (
                 <label key={value} className="flex items-center">
