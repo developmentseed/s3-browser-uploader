@@ -47,3 +47,21 @@ export const formatDate = (
 
   return { relative, absolute };
 };
+
+export const formatDateWithPreference = (
+  dateString: string,
+  format: "relative" | "absolute" | "iso8601"
+): string => {
+  const { relative, absolute } = formatDate(dateString);
+
+  switch (format) {
+    case "relative":
+      return relative;
+    case "absolute":
+      return absolute;
+    case "iso8601":
+      return new Date(dateString).toISOString();
+    default:
+      return relative;
+  }
+};

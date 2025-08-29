@@ -9,6 +9,7 @@ import {
   useRef,
 } from "react";
 import { Credentials } from "./CredentialsContext";
+import { usePreferences } from "./PreferencesContext";
 import { Upload } from "@aws-sdk/lib-storage";
 import { S3Client } from "@aws-sdk/client-s3";
 
@@ -49,6 +50,7 @@ export function UploadProvider({
   credentials: Credentials;
   bucket: string;
 }) {
+  const { preferences } = usePreferences();
   const [uploadProgress, setUploadProgress] = useState<UploadProgress[]>([]);
   const uploadProgressRef = useRef<UploadProgress[]>([]);
 
@@ -122,7 +124,7 @@ export function UploadProvider({
               ContentType: progress.file.type || "application/octet-stream",
               ChecksumAlgorithm: "CRC32",
             },
-            queueSize: 8,
+            queueSize: preferences.uploadQueueSize,
             partSize: 1024 * 1024 * 5, // 5MB chunks
             leavePartsOnError: false,
           });
@@ -187,7 +189,7 @@ export function UploadProvider({
         }
       }
     },
-    [credentials, bucket]
+    [credentials, bucket, preferences.uploadQueueSize]
   );
 
   const cancelUpload = useCallback((id: string) => {

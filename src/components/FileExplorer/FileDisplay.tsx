@@ -1,7 +1,12 @@
 import React from "react";
 import Link from "next/link";
-import { formatDate, formatFileSize } from "@/app/utils";
+import {
+  formatDate,
+  formatFileSize,
+  formatDateWithPreference,
+} from "@/app/utils";
 import { useUpload } from "@/contexts";
+import { usePreferences } from "@/contexts/PreferencesContext";
 import type { FileItem } from "./FileExplorer";
 import {
   FolderIcon,
@@ -47,6 +52,7 @@ const DirectoryItem = ({ item }: { item: FileItem }) => {
 
 const FileItem = ({ item }: { item: FileItem }) => {
   const { cancelUpload, retryUpload } = useUpload();
+  const { preferences } = usePreferences();
 
   return (
     <div
@@ -95,7 +101,10 @@ const FileItem = ({ item }: { item: FileItem }) => {
             <span className="text-gray-600 dark:text-gray-400">Cancelled</span>
           ) : (
             <span title={formatDate(item.lastModified).absolute}>
-              {formatDate(item.lastModified).relative}
+              {formatDateWithPreference(
+                item.lastModified,
+                preferences.dateFormat
+              )}
             </span>
           )}
         </div>

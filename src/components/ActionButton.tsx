@@ -41,6 +41,6 @@ interface ActionButtonProps {
   disabled?: boolean;
   loading?: boolean;
   icon: React.ReactNode;
-  children: React.ReactNode;
+  children?: React.ReactNode;
   variant?: "default" | "danger";
 }

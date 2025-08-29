@@ -10,15 +10,18 @@ import {
   CredentialsProvider,
   useCredentials,
   UploadProvider,
+  PreferencesProvider,
 } from "@/contexts";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 
 export default function Home() {
   return (
-    <Suspense>
-      <HomeContent />
-    </Suspense>
+    <PreferencesProvider>
+      <Suspense>
+        <HomeContent />
+      </Suspense>
+    </PreferencesProvider>
   );
 }
 

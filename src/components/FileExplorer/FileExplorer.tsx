@@ -6,8 +6,10 @@ import { useCredentials } from "@/contexts/CredentialsContext";
 import { S3Client, ListObjectsV2Command } from "@aws-sdk/client-s3";
 import { ActionButton } from "../ActionButton";
 import { FileDisplay } from "./FileDisplay";
+import { PreferencesModal } from "../PreferencesModal";
+import { usePreferences } from "@/contexts/PreferencesContext";
 import Link from "next/link";
-import { UploadFilesIcon, RefreshIcon } from "@/graphics";
+import { UploadFilesIcon, RefreshIcon, CogIcon } from "@/graphics";
 import { useUpload } from "@/contexts";
 
 interface S3Object {
@@ -42,10 +44,12 @@ export default function FileExplorer({
 }: FileExplorerProps) {
   const { credentials, bucket } = useCredentials();
   const { uploadFiles, uploadProgress } = useUpload();
+  const { preferences } = usePreferences();
 
   const [objects, setObjects] = useState<S3Object[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isPreferencesOpen, setIsPreferencesOpen] = useState(false);
 
   // Use react-dropzone hook for drag and drop
   const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
@@ -297,6 +301,11 @@ export default function FileExplorer({
               >
                 Upload Files
               </ActionButton>
+
+              <ActionButton
+                onClick={() => setIsPreferencesOpen(true)}
+                icon={<CogIcon className="w-4 h-4" />}
+              />
             </div>
           </div>
 
@@ -326,6 +335,12 @@ export default function FileExplorer({
           <input {...getInputProps()} />
         </div>
       )}
+
+      {/* Preferences Modal */}
+      <PreferencesModal
+        isOpen={isPreferencesOpen}
+        onClose={() => setIsPreferencesOpen(false)}
+      />
     </div>
   );
 }
