@@ -62,8 +62,8 @@ function AuthenticatedContent({
 
   // Show main content when not loading
   return (
-    <div className="min-h-screen bg-white dark:bg-black">
-      <div className="mx-auto max-w-4xl px-6 py-8">
+    <div className="min-h-screen bg-white dark:bg-black flex flex-col">
+      <div className="mx-auto max-w-4xl px-6 py-8 flex-shrink-0">
         {/* Header */}
         <div className="mb-8 text-center sm:mb-12">
           <h1 className="mb-3 font-geist text-3xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-4xl">
@@ -77,9 +77,11 @@ function AuthenticatedContent({
             </span>
           </p>
         </div>
+      </div>
 
-        {/* Main Content */}
-        <div className="bg-white dark:bg-black">
+      {/* Main Content - Large Width */}
+      <div className="bg-white dark:bg-black flex-1">
+        <div className="mx-auto max-w-6xl px-6">
           {credentials && bucket && (
             <UploadProvider credentials={credentials} bucket={bucket}>
               <FSProvider>

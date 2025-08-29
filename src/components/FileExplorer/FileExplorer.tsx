@@ -193,15 +193,15 @@ export default function FileExplorer({
   }
 
   return (
-    <div className="space-y-4" {...getRootProps()}>
+    <div className="min-h-screen space-y-4 flex flex-col" {...getRootProps()}>
       {/* File System Explorer - shown when not disabled */}
       {!disabled && (
-        <div className={`space-y-4 ${className} relative`}>
+        <div className={`flex-1 space-y-4 ${className} relative`}>
           {/* Drag and Drop Overlay */}
           {isDragActive && (
             <div
               className={`
-                ${className} absolute inset-0 
+                absolute inset-0 
                 bg-blue-500/10 dark:bg-blue-400/10 
                 border-2 border-dashed border-blue-500 dark:border-blue-400 
                 z-10 flex items-center justify-center`}
