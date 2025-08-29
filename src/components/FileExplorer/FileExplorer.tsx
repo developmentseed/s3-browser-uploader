@@ -5,7 +5,7 @@ import { useDropzone } from "react-dropzone";
 import { useCredentials } from "@/contexts/CredentialsContext";
 import { S3Client, ListObjectsV2Command } from "@aws-sdk/client-s3";
 import { ActionButton } from "../ActionButton";
-import { FileItem } from "./FileItem";
+import { FileDisplay } from "./FileDisplay";
 import Link from "next/link";
 
 interface S3Object {
@@ -13,6 +13,17 @@ interface S3Object {
   lastModified: string;
   size: number;
   isDirectory: boolean;
+}
+export interface FileItem {
+  key: string;
+  name: string;
+  lastModified: string;
+  size: number;
+  isDirectory: boolean;
+  isUpload: boolean;
+  uploadStatus?: "uploading" | "completed" | "error";
+  uploadProgress?: number;
+  uploadError?: string;
 }
 
 interface UploadProgress {
@@ -24,38 +35,25 @@ interface UploadProgress {
   error?: string;
 }
 
-interface S3FileExplorerProps {
+interface FileExplorerProps {
   className?: string;
   onFileUpload?: (files: File[]) => void;
   uploadProgress: UploadProgress[];
   disabled?: boolean;
   prefix: string;
-  onPrefixChange: (prefix: string) => void;
 }
 
-export default function S3FileExplorer({
+export default function FileExplorer({
   className = "",
   onFileUpload,
   uploadProgress = [],
   disabled = false,
   prefix,
-  onPrefixChange,
-}: S3FileExplorerProps) {
+}: FileExplorerProps) {
   const { credentials, username, bucket } = useCredentials();
   const [objects, setObjects] = useState<S3Object[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  // Update prefix when it changes from parent
-  useEffect(() => {
-    if (prefix && prefix !== "") {
-      // Ensure prefix ends with slash
-      const normalizedPrefix = prefix.endsWith("/") ? prefix : `${prefix}/`;
-      if (normalizedPrefix !== prefix) {
-        onPrefixChange(normalizedPrefix);
-      }
-    }
-  }, [prefix, onPrefixChange]);
 
   // Use react-dropzone hook for drag and drop
   const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
@@ -179,74 +177,8 @@ export default function S3FileExplorer({
     }
   };
 
-  const navigateToDirectory = (directoryKey: string) => {
-    onPrefixChange(directoryKey);
-  };
-
-  const navigateUp = () => {
-    if (prefix !== "") {
-      const parentPrefix = prefix.split("/").slice(0, -2).join("/") + "/";
-      onPrefixChange(parentPrefix);
-    }
-  };
-
-  const formatFileSize = (bytes: number): string => {
-    if (bytes === 0) return "0 B";
-    const k = 1024;
-    const sizes = ["B", "KB", "MB", "GB"];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
-  };
-
-  const formatDate = (
-    dateString: string
-  ): { relative: string; absolute: string } => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffInMs = now.getTime() - date.getTime();
-    const diffInSeconds = Math.floor(diffInMs / 1000);
-    const diffInMinutes = Math.floor(diffInSeconds / 60);
-    const diffInHours = Math.floor(diffInMinutes / 60);
-    const diffInDays = Math.floor(diffInHours / 24);
-    const diffInWeeks = Math.floor(diffInDays / 7);
-    const diffInMonths = Math.floor(diffInDays / 30);
-    const diffInYears = Math.floor(diffInDays / 365);
-
-    let relative = "";
-    if (diffInSeconds < 60) {
-      relative = "Just now";
-    } else if (diffInMinutes < 60) {
-      relative = `${diffInMinutes} minute${diffInMinutes === 1 ? "" : "s"} ago`;
-    } else if (diffInHours < 24) {
-      relative = `${diffInHours} hour${diffInHours === 1 ? "" : "s"} ago`;
-    } else if (diffInDays < 7) {
-      relative = `${diffInDays} day${diffInDays === 1 ? "" : "s"} ago`;
-    } else if (diffInWeeks < 4) {
-      relative = `${diffInWeeks} week${diffInWeeks === 1 ? "" : "s"} ago`;
-    } else if (diffInMonths < 12) {
-      relative = `${diffInMonths} month${diffInMonths === 1 ? "" : "s"} ago`;
-    } else {
-      relative = `${diffInYears} year${diffInYears === 1 ? "" : "s"} ago`;
-    }
-
-    const absolute = date.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-
-    return { relative, absolute };
-  };
-
   const getDisplayName = (key: string): string => {
-    const parts = key.split("/");
-    return parts[parts.length - 1] || key;
-  };
-
-  const getUploadProgress = (fileName: string): UploadProgress | undefined => {
-    return uploadProgress.find((up) => up.file.name === fileName);
+    return key.replace(/\/$/, "").split("/").pop()!;
   };
 
   // Create unified file list combining S3 objects and uploads
@@ -360,12 +292,12 @@ export default function S3FileExplorer({
 
           {/* Breadcrumb Navigation */}
           <div className="flex items-center gap-2 p-2 text-sm text-gray-600 dark:text-gray-400">
-            <button
-              onClick={() => onPrefixChange("")}
+            <Link
+              href={`/?user=${username}`}
               className="font-mono hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
             >
               {username}
-            </button>
+            </Link>
             {prefix !== "" && (
               <>
                 <span>/</span>
@@ -401,27 +333,27 @@ export default function S3FileExplorer({
           {/* Back Button and Refresh */}
           <div className="flex items-center gap-2">
             {prefix !== "" && (
-              <ActionButton
-                onClick={navigateUp}
-                disabled={loading}
-                icon={
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M15 19l-7-7 7-7"
-                    />
-                  </svg>
-                }
+              <Link
+                href={`/?user=${username}&prefix=${
+                  prefix.split("/").slice(0, -2).join("/") + "/"
+                }`}
+                className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 19l-7-7 7-7"
+                  />
+                </svg>
                 Back
-              </ActionButton>
+              </Link>
             )}
 
             <ActionButton
@@ -491,13 +423,7 @@ export default function S3FileExplorer({
               </div>
             ) : (
               getUnifiedFileList().map((item) => (
-                <FileItem
-                  key={item.key}
-                  item={item}
-                  onNavigateToDirectory={navigateToDirectory}
-                  formatFileSize={formatFileSize}
-                  formatDate={formatDate}
-                />
+                <FileDisplay key={item.key} item={item} username={username} />
               ))
             )}
           </div>

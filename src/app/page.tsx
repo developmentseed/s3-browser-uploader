@@ -9,8 +9,8 @@ import {
   CredentialsProvider,
   useCredentials,
 } from "@/contexts/CredentialsContext";
-import { useSearchParams, useRouter } from "next/navigation";
-import { useState, useEffect, useCallback, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 
 export default function Home() {
   return (
@@ -22,35 +22,10 @@ export default function Home() {
 
 function HomeContent() {
   const searchParams = useSearchParams();
-  const router = useRouter();
   const username = searchParams.get("user") || undefined;
 
-  // Get prefix from URL query param
-  const urlPrefix = searchParams.get("prefix") || "";
-  const [currentPrefix, setCurrentPrefix] = useState<string>(urlPrefix);
-
-  // Update URL when prefix changes
-  const handlePrefixChange = useCallback(
-    (newPrefix: string) => {
-      setCurrentPrefix(newPrefix);
-
-      const params = new URLSearchParams(searchParams);
-      if (newPrefix === "") {
-        params.delete("prefix");
-      } else {
-        params.set("prefix", newPrefix);
-      }
-
-      const newUrl = params.toString() ? `?${params.toString()}` : "";
-      router.replace(newUrl);
-    },
-    [searchParams, router]
-  );
-
-  // Sync prefix with URL changes
-  useEffect(() => {
-    setCurrentPrefix(urlPrefix);
-  }, [urlPrefix]);
+  // Get prefix directly from URL - no local state needed
+  const prefix = searchParams.get("prefix") || "";
 
   // Show username warning if no username provided
   if (!username) {
@@ -60,23 +35,17 @@ function HomeContent() {
   // Wrap the authenticated content in CredentialsProvider
   return (
     <CredentialsProvider initialUsername={username}>
-      <AuthenticatedContent
-        username={username}
-        currentPrefix={currentPrefix}
-        onPrefixChange={handlePrefixChange}
-      />
+      <AuthenticatedContent username={username} prefix={prefix} />
     </CredentialsProvider>
   );
 }
 
 function AuthenticatedContent({
   username,
-  currentPrefix,
-  onPrefixChange,
+  prefix,
 }: {
   username: string;
-  currentPrefix: string;
-  onPrefixChange: (prefix: string) => void;
+  prefix: string;
 }) {
   const { loading } = useCredentials();
 
@@ -124,10 +93,7 @@ function AuthenticatedContent({
 
         {/* Main Content */}
         <div className="bg-white dark:bg-gray-900">
-          <FileUploadSection
-            prefix={currentPrefix}
-            onPrefixChange={onPrefixChange}
-          />
+          <FileUploadSection prefix={prefix} />
         </div>
       </div>
     </div>

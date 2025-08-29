@@ -17,26 +17,19 @@ interface UploadProgress {
 
 interface FileUploadSectionProps {
   prefix: string;
-  onPrefixChange: (prefix: string) => void;
 }
 
-export default function FileUploadSection({
-  prefix,
-  onPrefixChange,
-}: FileUploadSectionProps) {
+export default function FileUploadSection({ prefix }: FileUploadSectionProps) {
   const { credentials, username, bucket } = useCredentials();
   const [uploadProgress, setUploadProgress] = useState<UploadProgress[]>([]);
 
   const handleFilesSelected = useCallback(
-    async (files: File[], filePrefix: string) => {
+    async (files: File[]) => {
       // Early return if no credentials are available
       if (!credentials || !username || !bucket) {
         console.log("No credentials available, file upload disabled");
         return;
       }
-
-      console.log("Selected files:", files, "for prefix:", filePrefix);
-      onPrefixChange(filePrefix);
 
       // Create S3 client with user credentials
       const s3Client = new S3Client({
@@ -48,10 +41,13 @@ export default function FileUploadSection({
         },
       });
 
+      // Normalize prefix to ensure it ends with slash
+      const normalizedPrefix = prefix.endsWith("/") ? prefix : `${prefix}/`;
+
       // Initialize upload progress for each file
       const initialProgress: UploadProgress[] = files.map((file) => ({
         file,
-        key: `${username}/${prefix}${file.name}`,
+        key: `${username}/${normalizedPrefix}${file.name}`,
         uploadedBytes: 0,
         totalBytes: file.size,
         status: "uploading",
@@ -62,7 +58,7 @@ export default function FileUploadSection({
       // Upload each file
       files.forEach(async (file, index) => {
         try {
-          const key = `${username}/${prefix}${file.name}`;
+          const key = `${username}/${normalizedPrefix}${file.name}`;
 
           const upload = new Upload({
             client: s3Client,
@@ -124,35 +120,15 @@ export default function FileUploadSection({
         }
       });
     },
-    [credentials, username, bucket]
+    [credentials, username, bucket, prefix]
   );
-
-  // Clean up completed uploads after a delay
-  const cleanupCompletedUploads = useCallback(() => {
-    setTimeout(() => {
-      setUploadProgress((prev) =>
-        prev.filter((up) => up.status !== "completed")
-      );
-    }, 5000); // Remove completed uploads after 5 seconds
-  }, []);
-
-  // Clean up completed uploads when they complete
-  useEffect(() => {
-    const completedCount = uploadProgress.filter(
-      (up) => up.status === "completed"
-    ).length;
-    if (completedCount > 0) {
-      cleanupCompletedUploads();
-    }
-  }, [uploadProgress, cleanupCompletedUploads]);
 
   return (
     <FileExplorer
-      onFileUpload={(files) => handleFilesSelected(files, prefix)}
+      onFileUpload={(files) => handleFilesSelected(files)}
       disabled={!credentials}
       uploadProgress={uploadProgress}
       prefix={prefix}
-      onPrefixChange={onPrefixChange}
     />
   );
 }
