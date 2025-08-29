@@ -51,6 +51,13 @@ export default function FileExplorer({
   const [error, setError] = useState<string | null>(null);
   const [isPreferencesOpen, setIsPreferencesOpen] = useState(false);
 
+  // Function to remove an item from the local state
+  const removeItemFromState = (keyToRemove: string) => {
+    setObjects((prevObjects) =>
+      prevObjects.filter((obj) => obj.key !== keyToRemove)
+    );
+  };
+
   // Use react-dropzone hook for drag and drop
   const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
     onDrop: (files) => {
@@ -328,7 +335,15 @@ export default function FileExplorer({
               </div>
             ) : (
               unifiedFileList.map((item) => (
-                <FileDisplay key={item.key} item={item} />
+                <FileDisplay
+                  key={item.key}
+                  item={item}
+                  onDelete={
+                    !item.isDirectory
+                      ? () => removeItemFromState(item.key)
+                      : undefined
+                  }
+                />
               ))
             )}
           </div>

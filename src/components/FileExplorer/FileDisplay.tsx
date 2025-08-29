@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import {
   formatDate,
@@ -7,6 +7,8 @@ import {
 } from "@/app/utils";
 import { useUpload } from "@/contexts";
 import { usePreferences } from "@/contexts/PreferencesContext";
+import { useCredentials } from "@/contexts/CredentialsContext";
+import { S3Client, DeleteObjectCommand } from "@aws-sdk/client-s3";
 import type { FileItem } from "./FileExplorer";
 import {
   FolderIcon,
@@ -15,17 +17,19 @@ import {
   FileIcon,
   CancelIcon,
   RetryIcon,
+  TrashIcon,
 } from "@/graphics";
 
 interface FileItemProps {
   item: FileItem;
+  onDelete?: () => void;
 }
 
-export const FileDisplay: React.FC<FileItemProps> = ({ item }) => {
+export const FileDisplay: React.FC<FileItemProps> = ({ item, onDelete }) => {
   return item.isDirectory ? (
     <DirectoryItem item={item} />
   ) : (
-    <FileItem item={item} />
+    <FileItem item={item} onDelete={onDelete} />
   );
 };
 
@@ -50,9 +54,54 @@ const DirectoryItem = ({ item }: { item: FileItem }) => {
   );
 };
 
-const FileItem = ({ item }: { item: FileItem }) => {
+const FileItem = ({
+  item,
+  onDelete,
+}: {
+  item: FileItem;
+  onDelete?: () => void;
+}) => {
   const { cancelUpload, retryUpload } = useUpload();
   const { preferences } = usePreferences();
+  const { credentials, bucket } = useCredentials();
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    if (!credentials || !bucket || !onDelete) return;
+
+    if (!confirm(`Are you sure you want to delete "${item.name}"?`)) {
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      // Create S3 client with user credentials
+      const s3Client = new S3Client({
+        region: credentials.region,
+        credentials: {
+          accessKeyId: credentials.accessKeyId,
+          secretAccessKey: credentials.secretAccessKey,
+          sessionToken: credentials.sessionToken,
+        },
+      });
+
+      // Delete the object
+      const command = new DeleteObjectCommand({
+        Bucket: bucket,
+        Key: item.key,
+      });
+
+      await s3Client.send(command);
+
+      // Call the onDelete callback to refresh the file list
+      onDelete();
+    } catch (error) {
+      console.error("Error deleting file:", error);
+      alert("Failed to delete file. Please try again.");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   return (
     <div
@@ -115,7 +164,7 @@ const FileItem = ({ item }: { item: FileItem }) => {
         <div className="flex-shrink-0 w-20">
           <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
             <div
-              className="bg-orange-600 dark:bg-orange-400 h-1.5 rounded-full transition-all duration-300"
+              className="bg-orange-600 dark:text-orange-400 h-1.5 rounded-full transition-all duration-300"
               style={{ width: `${item.uploadProgress || 0}%` }}
             ></div>
           </div>
@@ -149,10 +198,28 @@ const FileItem = ({ item }: { item: FileItem }) => {
         </div>
       )}
 
+      {/* Delete button for non-upload files */}
+      {!item.isUpload && onDelete && (
+        <div className="flex-shrink-0 flex items-center gap-1">
+          <button
+            onClick={handleDelete}
+            disabled={isDeleting}
+            className="p-1 rounded hover:bg-red-100 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Delete file"
+          >
+            {isDeleting ? (
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600 dark:border-red-400"></div>
+            ) : (
+              <TrashIcon className="w-4 h-4 hover:text-red-600 hover:dark:text-red-400" />
+            )}
+          </button>
+        </div>
+      )}
+
       {/* Status indicator for uploading files */}
       {item.isUpload && item.uploadStatus === "uploading" && (
         <div className="flex-shrink-0">
-          <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-orange-600 dark:border-orange-400"></div>
+          <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-orange-600 dark:text-orange-400"></div>
         </div>
       )}
     </div>

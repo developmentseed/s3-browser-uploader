@@ -10,6 +10,7 @@ A secure file upload solution powered by AWS S3 with multipart upload support an
 - **File Explorer**: Browse S3 buckets and navigate directories
 - **Drag & Drop**: Intuitive drag and drop interface for file selection
 - **Progress Visualization**: Visual progress bars and status indicators for uploads
+- **File Management**: Delete files directly from the file explorer with confirmation dialogs
 
 ## How It Works
 
@@ -37,6 +38,7 @@ A secure file upload solution powered by AWS S3 with multipart upload support an
 - Automatic cleanup of completed uploads after 5 seconds
 - File list refresh after uploads complete
 - Error handling with detailed error messages
+- File deletion via S3 DeleteObject API with user confirmation
 
 ## Usage
 
@@ -46,6 +48,7 @@ A secure file upload solution powered by AWS S3 with multipart upload support an
 4. Drag and drop files or click "Choose Files" to select files
 5. Monitor upload progress in real-time
 6. Files appear in the explorer once uploads complete
+7. Delete files by clicking the trash icon next to any file (with confirmation dialog)
 
 ## AWS Configuration Requirements
 
