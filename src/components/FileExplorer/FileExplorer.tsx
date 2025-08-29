@@ -7,11 +7,7 @@ import { S3Client, ListObjectsV2Command } from "@aws-sdk/client-s3";
 import { ActionButton } from "../ActionButton";
 import { FileDisplay } from "./FileDisplay";
 import Link from "next/link";
-import {
-  UploadFilesIcon,
-  BackArrowIcon,
-  RefreshIcon,
-} from "../../app/graphics";
+import { UploadFilesIcon, RefreshIcon } from "@/app/graphics";
 
 interface S3Object {
   key: string;
