@@ -309,7 +309,11 @@ export default function FileExplorer({
 
           {/* File List */}
           <div className="space-y-0.5 font-mono">
-            {unifiedFileList.length === 0 ? (
+            {loading ? (
+              <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                Loading...
+              </div>
+            ) : unifiedFileList.length === 0 ? (
               <div className="text-center py-8 text-gray-500 dark:text-gray-400">
                 This directory is empty
               </div>
