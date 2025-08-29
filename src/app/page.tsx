@@ -11,6 +11,7 @@ import {
   useCredentials,
   UploadProvider,
   PreferencesProvider,
+  FSProvider,
 } from "@/contexts";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
@@ -81,8 +82,10 @@ function AuthenticatedContent({
         <div className="bg-white dark:bg-black">
           {credentials && bucket && (
             <UploadProvider credentials={credentials} bucket={bucket}>
-              <FileExplorer prefix={prefix} />
-              <UploadLogDrawer />
+              <FSProvider>
+                <FileExplorer prefix={prefix} />
+                <UploadLogDrawer />
+              </FSProvider>
             </UploadProvider>
           )}
         </div>

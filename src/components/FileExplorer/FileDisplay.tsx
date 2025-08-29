@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import Link from "next/link";
 import {
   formatDate,
@@ -7,8 +7,6 @@ import {
 } from "@/app/utils";
 import { useUpload } from "@/contexts";
 import { usePreferences } from "@/contexts/PreferencesContext";
-import { useCredentials } from "@/contexts/CredentialsContext";
-import { S3Client, DeleteObjectCommand } from "@aws-sdk/client-s3";
 import type { FileItem } from "./FileExplorer";
 import {
   FolderIcon,
@@ -63,45 +61,6 @@ const FileItem = ({
 }) => {
   const { cancelUpload, retryUpload } = useUpload();
   const { preferences } = usePreferences();
-  const { credentials, bucket } = useCredentials();
-  const [isDeleting, setIsDeleting] = useState(false);
-
-  const handleDelete = async () => {
-    if (!credentials || !bucket || !onDelete) return;
-
-    if (!confirm(`Are you sure you want to delete "${item.name}"?`)) {
-      return;
-    }
-
-    setIsDeleting(true);
-    try {
-      // Create S3 client with user credentials
-      const s3Client = new S3Client({
-        region: credentials.region,
-        credentials: {
-          accessKeyId: credentials.accessKeyId,
-          secretAccessKey: credentials.secretAccessKey,
-          sessionToken: credentials.sessionToken,
-        },
-      });
-
-      // Delete the object
-      const command = new DeleteObjectCommand({
-        Bucket: bucket,
-        Key: item.key,
-      });
-
-      await s3Client.send(command);
-
-      // Call the onDelete callback to refresh the file list
-      onDelete();
-    } catch (error) {
-      console.error("Error deleting file:", error);
-      alert("Failed to delete file. Please try again.");
-    } finally {
-      setIsDeleting(false);
-    }
-  };
 
   return (
     <div
@@ -202,16 +161,11 @@ const FileItem = ({
       {!item.isUpload && onDelete && (
         <div className="flex-shrink-0 flex items-center gap-1">
           <button
-            onClick={handleDelete}
-            disabled={isDeleting}
-            className="p-1 rounded hover:bg-red-100 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            onClick={onDelete}
+            className="p-1 rounded hover:bg-red-100 dark:hover:bg-red-900/20 transition-colors"
             title="Delete file"
           >
-            {isDeleting ? (
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600 dark:border-red-400"></div>
-            ) : (
-              <TrashIcon className="w-4 h-4 hover:text-red-600 hover:dark:text-red-400" />
-            )}
+            <TrashIcon className="w-4 h-4 hover:text-red-600 hover:dark:text-red-400" />
           </button>
         </div>
       )}

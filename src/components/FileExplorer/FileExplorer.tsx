@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useDropzone } from "react-dropzone";
 import { useCredentials } from "@/contexts/CredentialsContext";
-import { S3Client, ListObjectsV2Command } from "@aws-sdk/client-s3";
+import { useFS } from "@/contexts/FSContext";
 import { ActionButton } from "../ActionButton";
 import { FileDisplay } from "./FileDisplay";
 import { PreferencesModal } from "../PreferencesModal";
@@ -12,12 +12,13 @@ import Link from "next/link";
 import { UploadFilesIcon, RefreshIcon, CogIcon } from "@/graphics";
 import { useUpload } from "@/contexts";
 
-interface S3Object {
+interface FSObject {
   key: string;
   lastModified: string;
   size: number;
   isDirectory: boolean;
 }
+
 export interface FileItem {
   key: string;
   name: string;
@@ -45,8 +46,9 @@ export default function FileExplorer({
   const { credentials, bucket } = useCredentials();
   const { uploadFiles, uploadProgress } = useUpload();
   const { preferences } = usePreferences();
+  const { listObjects, deleteObject } = useFS();
 
-  const [objects, setObjects] = useState<S3Object[]>([]);
+  const [objects, setObjects] = useState<FSObject[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isPreferencesOpen, setIsPreferencesOpen] = useState(false);
@@ -56,6 +58,23 @@ export default function FileExplorer({
     setObjects((prevObjects) =>
       prevObjects.filter((obj) => obj.key !== keyToRemove)
     );
+  };
+
+  // Function to handle file deletion
+  const handleDeleteFile = async (item: FileItem) => {
+    if (!confirm(`Are you sure you want to delete "${item.name}"?`)) {
+      return;
+    }
+
+    try {
+      await deleteObject(item.key);
+
+      // Remove the item from local state
+      removeItemFromState(item.key);
+    } catch (error) {
+      console.error("Error deleting file:", error);
+      alert("Failed to delete file. Please try again.");
+    }
   };
 
   // Use react-dropzone hook for drag and drop
@@ -69,12 +88,12 @@ export default function FileExplorer({
     disabled,
   });
 
-  // Fetch S3 objects when credentials or prefix changes
+  // Fetch file system objects when credentials or prefix changes
   useEffect(() => {
     if (credentials && bucket) {
-      fetchS3Objects();
+      fetchFileSystemObjects();
     }
-  }, [credentials, bucket, prefix]);
+  }, [credentials, bucket, prefix, listObjects]);
 
   // Refresh file list when ALL uploads complete
   useEffect(() => {
@@ -87,90 +106,26 @@ export default function FileExplorer({
 
     // Only refresh when there are no active uploads AND there are completed uploads
     if (!hasActiveUploads && hasCompletedUploads) {
-      // Wait a bit for S3 to be consistent, then refresh
+      // Wait a bit for the file system to be consistent, then refresh
       const timer = setTimeout(() => {
-        fetchS3Objects();
+        fetchFileSystemObjects();
       }, 1000);
       return () => clearTimeout(timer);
     }
-  }, [uploadProgress]);
+  }, [uploadProgress, listObjects]);
 
-  const fetchS3Objects = async () => {
+  const fetchFileSystemObjects = async () => {
     if (!credentials || !bucket) return;
 
     setLoading(true);
     setError(null);
 
     try {
-      // Create S3 client with user credentials
-      const s3Client = new S3Client({
-        region: credentials.region,
-        credentials: {
-          accessKeyId: credentials.accessKeyId,
-          secretAccessKey: credentials.secretAccessKey,
-          sessionToken: credentials.sessionToken,
-        },
-      });
-
-      // List objects with the specified prefix
-      const command = new ListObjectsV2Command({
-        Bucket: bucket,
-        Prefix: prefix.endsWith("/") ? prefix : `${prefix}/`,
-        Delimiter: "/",
-        MaxKeys: 1000,
-      });
-
-      const response = await s3Client.send(command);
-
-      // Process the response to create a clean list of objects
-      const objects: S3Object[] = [];
-
-      // Add directories (common prefixes)
-      if (response.CommonPrefixes) {
-        response.CommonPrefixes.forEach((commonPrefix) => {
-          if (commonPrefix.Prefix) {
-            // Remove username from the key for display
-            // const displayKey = commonPrefix.Prefix.replace(`${username}/`, "");
-            objects.push({
-              key: commonPrefix.Prefix,
-              lastModified: new Date().toISOString(), // Directories don't have lastModified
-              size: 0,
-              isDirectory: true,
-            });
-          }
-        });
-      }
-
-      // Add files
-      if (response.Contents) {
-        response.Contents.forEach((content) => {
-          if (content.Key && content.Key !== prefix) {
-            // Remove username from the key for display
-            const displayKey = content.Key.replace(`${prefix}/`, "");
-            objects.push({
-              key: displayKey,
-              lastModified:
-                content.LastModified?.toISOString() || new Date().toISOString(),
-              size: content.Size || 0,
-              isDirectory: false,
-            });
-          }
-        });
-      }
-
-      // Group by directories and files
-      const directories = objects
-        .filter((obj) => obj.isDirectory)
-        .sort((a, b) => a.key.localeCompare(b.key));
-
-      const files = objects
-        .filter((obj) => !obj.isDirectory)
-        .sort((a, b) => a.key.localeCompare(b.key));
-
-      setObjects([...directories, ...files]);
+      const fetchedObjects = await listObjects(prefix);
+      setObjects(fetchedObjects);
     } catch (err) {
-      setError("Failed to fetch S3 objects");
-      console.error("Error fetching S3 objects:", err);
+      setError("Failed to fetch file system objects");
+      console.error("Error fetching file system objects:", err);
     } finally {
       setLoading(false);
     }
@@ -180,10 +135,10 @@ export default function FileExplorer({
     return key.replace(/\/$/, "").split("/").pop()!;
   };
 
-  // Create unified file list combining S3 objects and uploads
+  // Create unified file list combining file system objects and uploads
   const unifiedFileList: FileItem[] = Object.values(
     Object.fromEntries([
-      // S3 Objects
+      // File System Objects
       ...objects.map((obj): [string, FileItem] => [
         obj.key,
         {
@@ -195,7 +150,7 @@ export default function FileExplorer({
           isUpload: false,
         },
       ]),
-      // Uploads in Prefix (possibly overwriting existing S3 objects)
+      // Uploads in Prefix (possibly overwriting existing file system objects)
       ...uploadProgress
         .filter(
           (upload) =>
@@ -239,7 +194,7 @@ export default function FileExplorer({
 
   return (
     <div className="space-y-4" {...getRootProps()}>
-      {/* S3 File Explorer - shown when not disabled */}
+      {/* File System Explorer - shown when not disabled */}
       {!disabled && (
         <div className={`space-y-4 ${className} relative`}>
           {/* Drag and Drop Overlay */}
@@ -294,7 +249,7 @@ export default function FileExplorer({
             {/* Buttons */}
             <div className="flex items-center gap-2">
               <ActionButton
-                onClick={fetchS3Objects}
+                onClick={fetchFileSystemObjects}
                 loading={loading}
                 icon={<RefreshIcon className="w-4 h-4" />}
               >
@@ -339,9 +294,7 @@ export default function FileExplorer({
                   key={item.key}
                   item={item}
                   onDelete={
-                    !item.isDirectory
-                      ? () => removeItemFromState(item.key)
-                      : undefined
+                    !item.isDirectory ? () => handleDeleteFile(item) : undefined
                   }
                 />
               ))
