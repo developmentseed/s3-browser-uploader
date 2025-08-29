@@ -8,7 +8,7 @@ import {
   ReactNode,
 } from "react";
 
-interface Credentials {
+export interface Credentials {
   accessKeyId: string;
   secretAccessKey: string;
   sessionToken: string;

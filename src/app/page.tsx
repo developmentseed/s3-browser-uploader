@@ -1,14 +1,15 @@
 "use client";
 
 import {
-  FileUploadSection,
   UsernameWarning,
   LoadingScreen,
+  FileExplorer,
 } from "@/components";
 import {
   CredentialsProvider,
   useCredentials,
-} from "@/contexts/CredentialsContext";
+  UploadProvider,
+} from "@/contexts";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { AppIcon } from "@/app/graphics";
@@ -48,7 +49,7 @@ function AuthenticatedContent({
   username: string;
   prefix: string;
 }) {
-  const { loading, error } = useCredentials();
+  const { loading, error, credentials, bucket } = useCredentials();
 
   // Show loading message when credentials are being fetched
   if (loading) {
@@ -81,7 +82,11 @@ function AuthenticatedContent({
 
         {/* Main Content */}
         <div className="bg-white dark:bg-black">
-          <FileUploadSection prefix={prefix} />
+          {credentials && bucket && (
+            <UploadProvider credentials={credentials} bucket={bucket}>
+              <FileExplorer prefix={prefix} />
+            </UploadProvider>
+          )}
         </div>
       </div>
     </div>

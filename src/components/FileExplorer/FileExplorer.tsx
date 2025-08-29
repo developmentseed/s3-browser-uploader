@@ -8,6 +8,7 @@ import { ActionButton } from "../ActionButton";
 import { FileDisplay } from "./FileDisplay";
 import Link from "next/link";
 import { UploadFilesIcon, RefreshIcon } from "@/app/graphics";
+import { useUpload } from "@/contexts";
 
 interface S3Object {
   key: string;
@@ -25,33 +26,23 @@ export interface FileItem {
   uploadStatus?: "uploading" | "completed" | "error";
   uploadProgress?: number;
   uploadError?: string;
-}
-
-interface UploadProgress {
-  file: File;
-  key: string;
-  uploadedBytes: number;
-  totalBytes: number;
-  status: "uploading" | "completed" | "error";
-  error?: string;
+  uploadId?: string;
 }
 
 interface FileExplorerProps {
   className?: string;
-  onFileUpload?: (files: File[]) => void;
-  uploadProgress: UploadProgress[];
   disabled?: boolean;
   prefix: string;
 }
 
 export default function FileExplorer({
   className = "",
-  onFileUpload,
-  uploadProgress = [],
   disabled = false,
   prefix,
 }: FileExplorerProps) {
   const { credentials, bucket } = useCredentials();
+  const { uploadFiles, uploadProgress } = useUpload();
+
   const [objects, setObjects] = useState<S3Object[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -59,13 +50,12 @@ export default function FileExplorer({
   // Use react-dropzone hook for drag and drop
   const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
     onDrop: (files) => {
-      if (onFileUpload && !disabled) {
-        onFileUpload(files);
-      }
+      if (disabled) return;
+      uploadFiles(files, prefix);
     },
     multiple: true,
     noClick: true, // Don't open file browser on click
-    disabled: disabled || !onFileUpload,
+    disabled,
   });
 
   // Fetch S3 objects when credentials or prefix changes
