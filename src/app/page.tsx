@@ -1,12 +1,7 @@
 "use client";
 
 import { LoadingScreen, UploadLogDrawer, FileExplorer } from "@/components";
-import {
-  UploadProvider,
-  PreferencesProvider,
-  FSProvider,
-  useAuth,
-} from "@/contexts";
+import { FileSystemProvider, PreferencesProvider, useAuth } from "@/contexts";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect } from "react";
 import { signIn } from "next-auth/react";
@@ -212,12 +207,10 @@ function AuthenticatedContent({
       <div className="bg-white dark:bg-black flex-1">
         <div className="mx-auto max-w-6xl px-6">
           {s3Credentials && s3Bucket && (
-            <UploadProvider credentials={s3Credentials} bucket={s3Bucket}>
-              <FSProvider>
-                <FileExplorer prefix={prefix} />
-                <UploadLogDrawer />
-              </FSProvider>
-            </UploadProvider>
+            <FileSystemProvider>
+              <FileExplorer prefix={prefix} />
+              <UploadLogDrawer />
+            </FileSystemProvider>
           )}
         </div>
       </div>

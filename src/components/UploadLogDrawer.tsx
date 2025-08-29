@@ -1,6 +1,6 @@
 "use client";
 
-import { useUpload } from "@/contexts";
+import { useFileSystem } from "@/contexts";
 import {
   CancelIcon,
   CheckIcon,
@@ -13,15 +13,17 @@ import { useState, useRef, useCallback, useEffect } from "react";
 
 export default function UploadLogDrawer() {
   const {
-    uploadProgress,
-    clearCompleted,
-    clearErrors,
-    removeCancelled,
-    clearAllUploads,
-    cancelUpload,
-    cancelAllUploads,
-    retryUpload,
-  } = useUpload();
+    uploads: {
+      progress: uploadProgress,
+      clearCompleted,
+      clearErrors,
+      removeCancelled,
+      clearAllUploads,
+      cancelUpload,
+      cancelAllUploads,
+      retryUpload,
+    },
+  } = useFileSystem();
 
   const [isExpanded, setIsExpanded] = useState(false);
   const [drawerHeight, setDrawerHeight] = useState(25); // Default 25vh (25% of viewport height)

@@ -2,15 +2,13 @@
 
 import { useState, useEffect } from "react";
 import { useDropzone } from "react-dropzone";
-import { useAuth } from "@/contexts";
-import { useFS } from "@/contexts/FSContext";
+import { useAuth, useFileSystem } from "@/contexts";
 import { ActionButton } from "../ActionButton";
 import { FileDisplay } from "./FileDisplay";
 import { PreferencesModal } from "../PreferencesModal";
 import { usePreferences } from "@/contexts/PreferencesContext";
 import Link from "next/link";
 import { UploadFilesIcon, RefreshIcon, CogIcon } from "@/graphics";
-import { useUpload } from "@/contexts";
 
 interface FSObject {
   key: string;
@@ -44,9 +42,11 @@ export default function FileExplorer({
   prefix,
 }: FileExplorerProps) {
   const { s3Credentials, s3Bucket } = useAuth();
-  const { uploadFiles, uploadProgress } = useUpload();
+  const {
+    uploads: { uploadFiles, progress: uploadProgress },
+  } = useFileSystem();
   const { preferences } = usePreferences();
-  const { listObjects, deleteObject } = useFS();
+  const { listObjects, deleteObject } = useFileSystem();
 
   const [objects, setObjects] = useState<FSObject[]>([]);
   const [loading, setLoading] = useState(false);

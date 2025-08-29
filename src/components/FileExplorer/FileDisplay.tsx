@@ -5,7 +5,7 @@ import {
   formatFileSize,
   formatDateWithPreference,
 } from "@/app/utils";
-import { useUpload } from "@/contexts";
+import { useFileSystem } from "@/contexts";
 import { usePreferences } from "@/contexts/PreferencesContext";
 import type { FileItem } from "./FileExplorer";
 import {
@@ -59,7 +59,9 @@ const FileItem = ({
   item: FileItem;
   onDelete?: () => void;
 }) => {
-  const { cancelUpload, retryUpload } = useUpload();
+  const {
+    uploads: { cancelUpload, retryUpload },
+  } = useFileSystem();
   const { preferences } = usePreferences();
 
   return (
