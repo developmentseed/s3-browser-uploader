@@ -79,9 +79,16 @@ const FileItem = ({ item }: { item: FileItem }) => {
               {Math.round(item.uploadProgress || 0)}%
             </span>
           ) : item.isUpload && item.uploadStatus === "error" ? (
-            <span className="text-red-600 dark:text-red-400">Failed</span>
+            <span
+              className="text-red-600 dark:text-red-400"
+              title={formatDate(item.lastModified).absolute}
+            >
+              Failed
+            </span>
           ) : (
-            formatDate(item.lastModified).relative
+            <span title={formatDate(item.lastModified).absolute}>
+              {formatDate(item.lastModified).relative}
+            </span>
           )}
         </div>
       </div>
