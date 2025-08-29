@@ -54,6 +54,27 @@ A secure file upload solution powered by AWS S3 with multipart upload support an
 
 This application uses NextAuth.js with OIDC (OpenID Connect) authentication for secure access. The system validates JWTs directly against your OIDC provider's public keys.
 
+### NextAuth Secret Requirement
+
+**Important**: Even though this application doesn't generate JWTs itself, NextAuth.js requires a `NEXTAUTH_SECRET` environment variable in production for:
+
+- **Session encryption**: Encrypting session data stored in cookies
+- **CSRF protection**: Generating and validating CSRF tokens  
+- **Cookie signing**: Preventing cookie tampering
+- **Security headers**: Various security operations
+
+**Generate a strong secret** using one of these methods:
+
+```bash
+# Option 1: Using OpenSSL
+openssl rand -base64 32
+
+# Option 2: Using Node.js
+node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
+```
+
+**Set the secret** in your production environment (AWS Amplify, Vercel, etc.) as `NEXTAUTH_SECRET`.
+
 ### Environment Variables
 
 Create a `.env.local` file with:
@@ -64,6 +85,10 @@ OIDC_DISCOVERY_URL=https://your-oidc-provider/.well-known/openid_configuration
 OIDC_CLIENT_ID=your-oidc-client-id
 OIDC_ISSUER=https://your-oidc-provider  # Optional: for JWT issuer validation
 OIDC_AUDIENCE=your-app-audience  # Optional: for JWT audience validation
+
+# NextAuth Configuration
+NEXTAUTH_SECRET=your-nextauth-secret-key-here  # Required for session encryption and security
+NEXTAUTH_URL=http://localhost:3000  # Your app URL (development)
 
 # AWS Configuration
 AWS_REGION=us-east-1
@@ -173,6 +198,25 @@ pnpm run dev
 pnpm run build
 ```
 
+## Deployment
+
+### AWS Amplify
+
+This project includes an `amplify.yml` configuration file for AWS Amplify deployment. The build process:
+
+1. **Installs pnpm** globally during preBuild phase
+2. **Installs dependencies** using `pnpm install`
+3. **Builds the application** using `pnpm run build`
+4. **Outputs artifacts** from the `.next` directory
+
+**Required Environment Variables in Amplify:**
+- `NEXTAUTH_SECRET`: Strong random secret for NextAuth.js
+- `OIDC_DISCOVERY_URL`: Your OIDC provider discovery URL
+- `OIDC_CLIENT_ID`: Your OIDC client ID
+- `NEXTAUTH_URL`: Your production domain (e.g., `https://yourdomain.com`)
+
+**Note**: The `amplify.yml` file handles the pnpm installation automatically, so you don't need to worry about package manager availability.
+
 ## Dependencies
 
 - `@aws-sdk/client-s3`: S3 client for file operations
@@ -193,6 +237,13 @@ The application uses a component-based architecture with:
 
 Upload progress is managed at the FileUploadSection level and passed down to child components for display.
 
+### Build Configuration
+
+- **`amplify.yml`**: AWS Amplify build configuration for production deployment
+- **`next.config.ts`**: Next.js configuration
+- **`tsconfig.json`**: TypeScript configuration
+- **`tailwind.config.js`**: Tailwind CSS configuration
+
 ## Troubleshooting
 
 ### Common Issues
@@ -200,6 +251,8 @@ Upload progress is managed at the FileUploadSection level and passed down to chi
 1. **Checksum Validation Errors**: Ensure CORS includes `x-amz-checksum-crc32` header
 2. **Multipart Upload Failures**: Verify IAM role has all required multipart permissions
 3. **CORS Errors**: Check that your domain is included in `AllowedOrigins`
+4. **NextAuth Secret Errors**: Ensure `NEXTAUTH_SECRET` is set in production environment
+5. **Session Issues**: Verify `NEXTAUTH_URL` matches your production domain
 
 ### Debug Mode
 
