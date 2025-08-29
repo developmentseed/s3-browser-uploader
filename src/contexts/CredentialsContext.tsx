@@ -83,7 +83,7 @@ export function CredentialsProvider({
         setError(data.error || "Failed to fetch credentials");
       }
     } catch (err) {
-      setError("Network error occurred");
+      setError(err instanceof Error ? err.message : `${err}`);
       console.error("Error fetching credentials:", err);
     } finally {
       setLoading(false);
