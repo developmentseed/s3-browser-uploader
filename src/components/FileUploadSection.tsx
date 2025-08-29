@@ -56,7 +56,7 @@ export default function FileUploadSection({ prefix }: FileUploadSectionProps) {
       setUploadProgress((prev) => [...prev, ...initialProgress]);
 
       // Upload each file
-      files.forEach(async (file, index) => {
+      const promises = files.map(async (file) => {
         try {
           const key = `${normalizedPrefix}${file.name}`;
 
@@ -119,6 +119,11 @@ export default function FileUploadSection({ prefix }: FileUploadSectionProps) {
           );
         }
       });
+
+      // NOTE: Consider uploading more than one file at a time...
+      for (const promise of promises) {
+        await promise;
+      }
     },
     [credentials, bucket, prefix]
   );
