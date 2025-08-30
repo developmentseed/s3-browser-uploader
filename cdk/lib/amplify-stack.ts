@@ -182,10 +182,5 @@ export class AmplifyNextAppStack extends cdk.Stack {
       value: uploadBucket.bucketName,
       description: "S3 Bucket for file uploads",
     });
-
-    new cdk.CfnOutput(this, "LambdaExecutionRoleArn", {
-      value: computeRole.roleArn,
-      description: "Lambda execution role ARN",
-    });
   }
 }
