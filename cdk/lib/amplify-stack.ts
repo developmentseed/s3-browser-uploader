@@ -126,6 +126,7 @@ export class AmplifyNextAppStack extends cdk.Stack {
         oauthToken: cdk.SecretValue.secretsManager(props.githubTokenSecretName),
       }),
       computeRole,
+      platform: amplify.Platform.WEB_COMPUTE,
       buildSpec: codebuild.BuildSpec.fromObjectToYaml({
         version: "1.0",
         frontend: {
