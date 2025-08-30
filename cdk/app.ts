@@ -5,7 +5,6 @@ import { AmplifyNextAppStack } from "./lib/amplify-stack";
 
 const app = new cdk.App();
 
-if (!process.env.REPOSITORY_URL) throw new Error("REPOSITORY_URL is not set");
 if (!process.env.NEXTAUTH_SECRET) throw new Error("NEXTAUTH_SECRET is not set");
 if (!process.env.OIDC_DISCOVERY_URL)
   throw new Error("OIDC_DISCOVERY_URL is not set");
