@@ -88,10 +88,7 @@ export class AmplifyNextAppStack extends cdk.Stack {
             s3.HttpMethods.DELETE,
             s3.HttpMethods.HEAD,
           ],
-          allowedOrigins: [
-            "http://localhost:3000",
-            `https://${props.domainName}`,
-          ],
+          allowedOrigins: ["http://localhost:3000", `${props.domainName}`],
           exposedHeaders: [
             "ETag",
             "x-amz-multipart-upload-id",
@@ -145,7 +142,7 @@ export class AmplifyNextAppStack extends cdk.Stack {
             paths: ["node_modules/**/*", ".next/cache/**/*"],
           },
         },
-        defaultDomain: props.domainName,
+        defaultDomain: new URL(props.domainName!).hostname,
       }),
       environmentVariables: {
         IAM_ROLE_ARN: s3AccessRole.roleArn,
@@ -158,7 +155,6 @@ export class AmplifyNextAppStack extends cdk.Stack {
         OIDC_AUDIENCE: props.oidcAudience || "",
       },
     });
-    amplifyApp.addDomain(new URL(props.domainName!).hostname);
 
     s3AccessRole.grantAssumeRole(amplifyApp.computeRole!);
 
