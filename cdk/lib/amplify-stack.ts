@@ -158,6 +158,7 @@ export class AmplifyNextAppStack extends cdk.Stack {
         OIDC_AUDIENCE: props.oidcAudience || "",
       },
     });
+    amplifyApp.addDomain(props.domainName!);
 
     s3AccessRole.grantAssumeRole(amplifyApp.computeRole!);
 
