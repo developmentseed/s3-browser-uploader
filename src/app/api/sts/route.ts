@@ -12,9 +12,7 @@ export async function POST(request: NextRequest) {
   return withOIDCAuth(request, async (userId) => {
     try {
       // Create STS client
-      const stsClient = new STSClient({
-        region: process.env.AWS_REGION || "us-east-1",
-      });
+      const stsClient = new STSClient();
 
       // Create the policy document for the temporary credentials
       const policyDocument = {
