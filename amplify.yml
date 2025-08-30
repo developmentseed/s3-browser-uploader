@@ -9,6 +9,7 @@ frontend:
       commands:
         - env | grep -e S3_BUCKET_NAME >> .env.production
         - env | grep -e IAM_ROLE_ARN >> .env.production
+        - env | grep -e NEXTAUTH_URL >> .env.production
         - env | grep -e NEXTAUTH_SECRET >> .env.production
         - env | grep -e OIDC_CLIENT_ID >> .env.production
         - pnpm run build
