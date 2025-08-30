@@ -142,7 +142,6 @@ export class AmplifyNextAppStack extends cdk.Stack {
             paths: ["node_modules/**/*", ".next/cache/**/*"],
           },
         },
-        defaultDomain: new URL(props.domainName!).hostname,
       }),
       environmentVariables: {
         IAM_ROLE_ARN: s3AccessRole.roleArn,
@@ -155,6 +154,18 @@ export class AmplifyNextAppStack extends cdk.Stack {
         OIDC_AUDIENCE: props.oidcAudience || "",
       },
     });
+
+    if (props.domainName) {
+      const domain = new amplify.Domain(this, "Domain", {
+        app: amplifyApp,
+        domainName: props.domainName,
+        autoSubDomainIamRole: s3AccessRole,
+      });
+      domain.mapSubDomain(
+        amplify.Branch.fromBranchName(this, "Branch", branchName),
+        ""
+      );
+    }
 
     s3AccessRole.grantAssumeRole(amplifyApp.computeRole!);
 
