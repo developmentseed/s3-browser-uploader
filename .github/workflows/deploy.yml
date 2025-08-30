@@ -48,7 +48,7 @@ jobs:
           npx cdk deploy --require-approval never
         env:
           REPOSITORY: ${{ github.repository }}
-          PAT_SECRET_NAME: ${{ secrets.PAT_SECRET_NAME }}
+          PAT_SECRET_NAME: ${{ vars.PAT_SECRET_NAME }}
           BRANCH_NAME: main
           DOMAIN_NAME: ${{ vars.DOMAIN_NAME }}
           NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
