@@ -109,6 +109,7 @@ export class AmplifyNextAppStack extends cdk.Stack {
 
     // Create Amplify app with modern constructs
     const amplifyApp = new amplify.App(this, "AmplifyApp", {
+      appName: `${props.githubOwner}-${props.githubRepo}`,
       sourceCodeProvider: new amplify.GitHubSourceCodeProvider({
         owner: props.githubOwner,
         repository: props.githubRepo,
@@ -149,7 +150,7 @@ export class AmplifyNextAppStack extends cdk.Stack {
       environmentVariables: {
         IAM_ROLE_ARN: s3AccessRole.roleArn,
         S3_BUCKET_NAME: uploadBucket.bucketName,
-        NEXTAUTH_URL: props.domainName ? `https://${props.domainName}` : "",
+        NEXTAUTH_URL: props.domainName ? props.domainName : "",
         NEXTAUTH_SECRET: props.nextauthSecret,
         OIDC_DISCOVERY_URL: props.oidcDiscoveryUrl,
         OIDC_CLIENT_ID: props.oidcClientId,
