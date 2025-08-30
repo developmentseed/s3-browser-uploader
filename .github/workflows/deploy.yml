@@ -45,7 +45,7 @@ jobs:
 
       - name: Deploy CDK Stack
         run: |
-          cdk deploy --require-approval never
+          npx cdk deploy --require-approval never
         env:
           REPOSITORY_URL: ${{ github.server_url }}/${{ github.repository }}
           BRANCH_NAME: main
