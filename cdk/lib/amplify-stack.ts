@@ -61,7 +61,7 @@ export class AmplifyNextAppStack extends cdk.Stack {
 
     // Create S3 bucket for file uploads
     const uploadBucket = new s3.Bucket(this, "UploadBucket", {
-      bucketName: s3BucketName,
+      bucketName: s3BucketName.toLowerCase(),
       versioned: false,
       removalPolicy: cdk.RemovalPolicy.RETAIN,
       encryption: s3.BucketEncryption.S3_MANAGED,
@@ -78,8 +78,7 @@ export class AmplifyNextAppStack extends cdk.Stack {
           ],
           allowedOrigins: [
             "http://localhost:3000",
-            "http://localhost:3002",
-            // Add your production domain here
+            `https://${props.domainName}`,
           ],
           exposedHeaders: [
             "ETag",
