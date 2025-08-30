@@ -102,21 +102,10 @@ export class AmplifyNextAppStack extends cdk.Stack {
       ],
     });
 
-    // Create IAM role for Lambda execution (for your API routes)
-    const computeRole = new iam.Role(this, "LambdaExecutionRole", {
-      assumedBy: new iam.ServicePrincipal("lambda.amazonaws.com"),
-      managedPolicies: [
-        iam.ManagedPolicy.fromAwsManagedPolicyName(
-          "service-role/AWSLambdaBasicExecutionRole"
-        ),
-      ],
-    });
-
     const s3AccessRole = new iam.Role(this, "S3AccessRole", {
       assumedBy: new iam.ServicePrincipal("lambda.amazonaws.com"),
     });
     uploadBucket.grantReadWrite(s3AccessRole);
-    s3AccessRole.grantAssumeRole(computeRole);
 
     // Create Amplify app with modern constructs
     const amplifyApp = new amplify.App(this, "AmplifyApp", {
@@ -125,7 +114,6 @@ export class AmplifyNextAppStack extends cdk.Stack {
         repository: props.githubRepo,
         oauthToken: cdk.SecretValue.secretsManager(props.githubTokenSecretName),
       }),
-      computeRole,
       platform: amplify.Platform.WEB_COMPUTE,
       buildSpec: codebuild.BuildSpec.fromObjectToYaml({
         version: "1.0",
@@ -168,6 +156,8 @@ export class AmplifyNextAppStack extends cdk.Stack {
         OIDC_AUDIENCE: props.oidcAudience || "",
       },
     });
+
+    s3AccessRole.grantAssumeRole(amplifyApp.computeRole!);
 
     // Add branch with environment variables
     const branch = amplifyApp.addBranch(branchName, {
