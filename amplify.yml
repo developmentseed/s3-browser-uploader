@@ -7,19 +7,19 @@ frontend:
         - pnpm install
     build:
       commands:
-        - env | grep -e S3_BUCKET_NAME >> .env.production
         - env | grep -e IAM_ROLE_ARN >> .env.production
+        - env | grep -e S3_BUCKET_NAME >> .env.production
         - env | grep -e NEXTAUTH_URL >> .env.production
         - env | grep -e NEXTAUTH_SECRET >> .env.production
         - env | grep -e OIDC_DISCOVERY_URL >> .env.production
         - env | grep -e OIDC_CLIENT_ID >> .env.production
-        - env | grep -e OIDC_ISSUER >> .env.production
-        - env | grep -e OIDC_AUDIENCE >> .env.production
+        - env | grep -e OIDC_ISSUER >> .env.production || true # optional
+        - env | grep -e OIDC_AUDIENCE >> .env.production || true # optional
         - pnpm run build
   artifacts:
     baseDirectory: .next
     files:
-      - '**/*'
+      - "**/*"
   cache:
     paths:
       - node_modules/**/*
