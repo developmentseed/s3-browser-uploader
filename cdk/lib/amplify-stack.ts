@@ -158,7 +158,7 @@ export class AmplifyNextAppStack extends cdk.Stack {
     if (props.domainName) {
       const domain = new amplify.Domain(this, "Domain", {
         app: amplifyApp,
-        domainName: props.domainName,
+        domainName: new URL(props.domainName).hostname,
         autoSubDomainIamRole: s3AccessRole,
       });
       domain.mapSubDomain(
