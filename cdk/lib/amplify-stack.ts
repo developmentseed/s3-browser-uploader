@@ -144,6 +144,7 @@ export class AmplifyNextAppStack extends cdk.Stack {
             paths: ["node_modules/**/*", ".next/cache/**/*"],
           },
         },
+        defaultDomain: props.domainName,
       }),
       environmentVariables: {
         IAM_ROLE_ARN: s3AccessRole.roleArn,
