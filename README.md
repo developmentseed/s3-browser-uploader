@@ -54,6 +54,22 @@ A secure file upload solution powered by AWS S3 with multipart upload support an
 
 This application uses NextAuth.js with OIDC (OpenID Connect) authentication for secure access. The system validates JWTs directly against your OIDC provider's public keys.
 
+## Deployment
+
+This project includes automated deployment via GitHub Actions with OIDC authentication. See [DEPLOYMENT.md](DEPLOYMENT.md) for complete setup instructions.
+
+### Quick Setup
+
+1. Run the setup script to create AWS resources:
+   ```bash
+   ./scripts/setup-github-oidc.sh [github-org] [github-repo] [role-name]
+   ```
+
+2. Add the required secrets to your GitHub repository
+3. Push to main/develop branch to trigger deployment
+
+The workflow will automatically deploy your CDK stack with all environment variables configured.
+
 ### NextAuth Secret Requirement
 
 **Important**: Even though this application doesn't generate JWTs itself, NextAuth.js requires a `NEXTAUTH_SECRET` environment variable in production for:

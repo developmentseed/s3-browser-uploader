@@ -25,6 +25,8 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "aws-cdk-lib": "^2.213.0",
+    "constructs": "^10.4.2",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
