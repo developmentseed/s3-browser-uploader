@@ -9,7 +9,6 @@ if (!process.env.NEXTAUTH_SECRET) throw new Error("NEXTAUTH_SECRET is not set");
 if (!process.env.OIDC_DISCOVERY_URL)
   throw new Error("OIDC_DISCOVERY_URL is not set");
 if (!process.env.OIDC_CLIENT_ID) throw new Error("OIDC_CLIENT_ID is not set");
-if (!process.env.GITHUB_TOKEN) throw new Error("GITHUB_TOKEN is not set");
 if (!process.env.REPOSITORY) throw new Error("REPOSITORY is not set");
 if (!process.env.PAT_SECRET_NAME) throw new Error("PAT_SECRET_NAME is not set");
 
