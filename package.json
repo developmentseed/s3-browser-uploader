@@ -21,6 +21,7 @@
     "react-dropzone": "^14.3.8"
   },
   "devDependencies": {
+    "@aws-cdk/aws-amplify-alpha": "2.213.0-alpha.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",

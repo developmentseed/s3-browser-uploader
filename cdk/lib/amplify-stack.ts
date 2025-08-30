@@ -1,14 +1,26 @@
 import * as cdk from "aws-cdk-lib";
 import { Construct } from "constructs";
-import * as amplify from "aws-cdk-lib/aws-amplify";
+import * as amplify from "@aws-cdk/aws-amplify-alpha";
+import * as codebuild from "aws-cdk-lib/aws-codebuild";
 import * as iam from "aws-cdk-lib/aws-iam";
 import * as s3 from "aws-cdk-lib/aws-s3";
+import * as secretsmanager from "aws-cdk-lib/aws-secretsmanager";
 
 export interface AmplifyNextAppStackProps extends cdk.StackProps {
   /**
-   * GitHub repository URL for the Amplify app
+   * GitHub owner for the Amplify app
    */
-  repositoryUrl: string;
+  githubOwner: string;
+
+  /**
+   * GitHub repository for the Amplify app
+   */
+  githubRepo: string;
+
+  /**
+   * GitHub OAuth token secret name in Secrets Manager
+   */
+  githubTokenSecretName: string;
 
   /**
    * Branch name to deploy (default: main)
@@ -90,67 +102,19 @@ export class AmplifyNextAppStack extends cdk.Stack {
       ],
     });
 
-    // Create IAM role for Amplify to assume
-    const amplifyServiceRole = new iam.Role(this, "AmplifyServiceRole", {
-      assumedBy: new iam.ServicePrincipal("amplify.amazonaws.com"),
-      managedPolicies: [
-        iam.ManagedPolicy.fromAwsManagedPolicyName(
-          "AdministratorAccess-Amplify"
-        ),
-      ],
-    });
-
-    // Create IAM role for Lambda execution (for your API routes)
-    const lambdaExecutionRole = new iam.Role(this, "LambdaExecutionRole", {
-      assumedBy: new iam.ServicePrincipal("lambda.amazonaws.com"),
-      managedPolicies: [
-        iam.ManagedPolicy.fromAwsManagedPolicyName(
-          "service-role/AWSLambdaBasicExecutionRole"
-        ),
-      ],
-    });
-
     const s3AccessRole = new iam.Role(this, "S3AccessRole", {
       assumedBy: new iam.ServicePrincipal("lambda.amazonaws.com"),
     });
     uploadBucket.grantReadWrite(s3AccessRole);
-    s3AccessRole.grantAssumeRole(lambdaExecutionRole);
 
-    // Create Amplify app
-    const amplifyApp = new amplify.CfnApp(this, "AmplifyApp", {
-      name: `${this.stackName}-app`,
-      platform: "WEB_COMPUTE",
-      repository: props.repositoryUrl,
-      iamServiceRole: amplifyServiceRole.roleArn,
-
-      // Environment variables for all branches
-      environmentVariables: Object.entries({
-        IAM_ROLE_ARN: s3AccessRole.roleArn,
-        S3_BUCKET_NAME: uploadBucket.bucketName,
-        NEXTAUTH_URL: props.domainName ? `https://${props.domainName}` : "",
-        NEXTAUTH_SECRET: props.nextauthSecret,
-        OIDC_DISCOVERY_URL: props.oidcDiscoveryUrl,
-        OIDC_CLIENT_ID: props.oidcClientId,
-        OIDC_ISSUER: props.oidcIssuer,
-        OIDC_AUDIENCE: props.oidcAudience,
-      }).map(([name, value]) => ({ name, value })),
-    });
-
-    // Create branch with build specification
-    const branch = new amplify.CfnBranch(this, "MainBranch", {
-      appId: amplifyApp.attrAppId,
-      branchName: branchName,
-      enableAutoBuild: true,
-      enablePerformanceMode: true,
-
-      // Branch-specific environment variables
-      environmentVariables: [
-        { name: "NODE_ENV", value: "production" },
-        { name: "CDK_STACK_NAME", value: this.stackName },
-      ],
-
-      // Build specification
-      buildSpec: JSON.stringify({
+    // Create Amplify app with modern constructs
+    const amplifyApp = new amplify.App(this, "AmplifyApp", {
+      sourceCodeProvider: new amplify.GitHubSourceCodeProvider({
+        owner: props.githubOwner,
+        repository: props.githubRepo,
+        oauthToken: cdk.SecretValue.secretsManager(props.githubTokenSecretName),
+      }),
+      buildSpec: codebuild.BuildSpec.fromObjectToYaml({
         version: "1.0",
         frontend: {
           phases: {
@@ -180,27 +144,42 @@ export class AmplifyNextAppStack extends cdk.Stack {
           },
         },
       }),
+      environmentVariables: {
+        IAM_ROLE_ARN: s3AccessRole.roleArn,
+        S3_BUCKET_NAME: uploadBucket.bucketName,
+        NEXTAUTH_URL: props.domainName ? `https://${props.domainName}` : "",
+        NEXTAUTH_SECRET: props.nextauthSecret,
+        OIDC_DISCOVERY_URL: props.oidcDiscoveryUrl,
+        OIDC_CLIENT_ID: props.oidcClientId,
+        OIDC_ISSUER: props.oidcIssuer || "",
+        OIDC_AUDIENCE: props.oidcAudience || "",
+      },
+    });
+
+    s3AccessRole.grantAssumeRole(amplifyApp.computeRole!);
+
+    // Add branch with environment variables
+    const branch = amplifyApp.addBranch(branchName, {
+      environmentVariables: {
+        NODE_ENV: "production",
+        CDK_STACK_NAME: this.stackName,
+      },
     });
 
     // Outputs
     new cdk.CfnOutput(this, "AmplifyAppId", {
-      value: amplifyApp.attrAppId,
+      value: amplifyApp.appId,
       description: "Amplify App ID",
     });
 
     new cdk.CfnOutput(this, "AmplifyAppUrl", {
-      value: `https://${branch.attrBranchName}.${amplifyApp.attrAppId}.amplifyapp.com`,
+      value: `https://${branch.branchName}.${amplifyApp.appId}.amplifyapp.com`,
       description: "Amplify App URL",
     });
 
     new cdk.CfnOutput(this, "S3BucketName", {
       value: uploadBucket.bucketName,
       description: "S3 Bucket for file uploads",
-    });
-
-    new cdk.CfnOutput(this, "LambdaExecutionRoleArn", {
-      value: lambdaExecutionRole.roleArn,
-      description: "Lambda execution role ARN",
     });
   }
 }

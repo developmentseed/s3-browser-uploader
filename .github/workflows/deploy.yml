@@ -47,7 +47,8 @@ jobs:
         run: |
           npx cdk deploy --require-approval never
         env:
-          REPOSITORY_URL: ${{ github.server_url }}/${{ github.repository }}
+          REPOSITORY: ${{ github.repository }}
+          PAT_SECRET_NAME: ${{ secrets.PAT_SECRET_NAME }}
           BRANCH_NAME: main
           DOMAIN_NAME: ${{ vars.DOMAIN_NAME }}
           NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}

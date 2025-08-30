@@ -42,6 +42,9 @@ importers:
         specifier: ^14.3.8
         version: 14.3.8(react@19.1.0)
     devDependencies:
+      '@aws-cdk/aws-amplify-alpha':
+        specifier: 2.213.0-alpha.0
+        version: 2.213.0-alpha.0(aws-cdk-lib@2.213.0(constructs@10.4.2))(constructs@10.4.2)
       '@tailwindcss/postcss':
         specifier: ^4
         version: 4.1.12
@@ -81,6 +84,13 @@ packages:
 
   '@aws-cdk/asset-node-proxy-agent-v6@2.1.0':
     resolution: {integrity: sha512-7bY3J8GCVxLupn/kNmpPc5VJz8grx+4RKfnnJiO1LG+uxkZfANZG3RMHhE+qQxxwkyQ9/MfPtTpf748UhR425A==}
+
+  '@aws-cdk/aws-amplify-alpha@2.213.0-alpha.0':
+    resolution: {integrity: sha512-6AIwI5BDgRjOOBMPMGI4S3nNXqttEFa92etuacmCMm1/sXn2HTZNAvl4uhk5uOrJF+d68SXL+5gd95kEwLLTgQ==}
+    engines: {node: '>= 18.0.0'}
+    peerDependencies:
+      aws-cdk-lib: ^2.213.0
+      constructs: ^10.0.0
 
   '@aws-cdk/cloud-assembly-schema@48.6.0':
     resolution: {integrity: sha512-VwAHw5G/meFQsiReu1drD+mkL+jiCL7FMD/xoWDjvKcvFf4Xszl22zVskhfcekeU6+9cUe5Uy+QKkwOwMi1vGg==}
@@ -1220,6 +1230,11 @@ snapshots:
   '@aws-cdk/asset-awscli-v1@2.2.242': {}
 
   '@aws-cdk/asset-node-proxy-agent-v6@2.1.0': {}
+
+  '@aws-cdk/aws-amplify-alpha@2.213.0-alpha.0(aws-cdk-lib@2.213.0(constructs@10.4.2))(constructs@10.4.2)':
+    dependencies:
+      aws-cdk-lib: 2.213.0(constructs@10.4.2)
+      constructs: 10.4.2
 
   '@aws-cdk/cloud-assembly-schema@48.6.0': {}
 
