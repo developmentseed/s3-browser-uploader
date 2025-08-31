@@ -97,7 +97,7 @@ export function UploadLogDrawer() {
   };
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 border-t border-gray-200 dark:border-gray-700 shadow-lg">
+    <div className="fixed bottom-0 left-0 right-0 border-t border-gray-200 dark:border-gray-700 shadow-lg bg-white dark:bg-black">
       {/* Collapsed State */}
       <div className="px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-6 text-sm">
