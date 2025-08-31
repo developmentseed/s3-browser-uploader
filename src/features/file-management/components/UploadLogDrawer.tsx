@@ -101,37 +101,49 @@ export function UploadLogDrawer() {
       {/* Collapsed State */}
       <div className="px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-6 text-sm">
-          {uploadingCount > 0 && (
-            <div className="flex items-center gap-2 text-black dark:text-black">
-              <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-black dark:border-black"></div>
-              <span>{uploadingCount} uploading</span>
-            </div>
-          )}
-
-          {queuedCount > 0 && (
-            <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400">
-              <span>{queuedCount} queued</span>
-            </div>
-          )}
-
-          {completedCount > 0 && (
-            <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
-              <CheckIcon className="w-3 h-3" />
-              <span>{completedCount} completed</span>
-            </div>
-          )}
-
-          {errorCount > 0 && (
-            <div className="flex items-center gap-2 text-red-600 dark:text-red-400">
-              <XIcon className="w-3 h-3" />
-              <span>{errorCount} failed</span>
-            </div>
-          )}
-
-          {cancelledCount > 0 && (
-            <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
-              <span>{cancelledCount} cancelled</span>
-            </div>
+          {[
+            {
+              count: uploadingCount,
+              icon: (
+                <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-black dark:text-black"></div>
+              ),
+              label: "uploading",
+              color: "text-black dark:text-black",
+            },
+            {
+              count: queuedCount,
+              icon: null,
+              label: "queued",
+              color: "text-blue-600 dark:text-blue-400",
+            },
+            {
+              count: completedCount,
+              icon: <CheckIcon className="w-3 h-3" />,
+              label: "completed",
+              color: "text-green-600 dark:text-green-400",
+            },
+            {
+              count: errorCount,
+              icon: <XIcon className="w-3 h-3" />,
+              label: "failed",
+              color: "text-red-600 dark:text-red-400",
+            },
+            {
+              count: cancelledCount,
+              icon: null,
+              label: "cancelled",
+              color: "text-gray-600 dark:text-gray-400",
+            },
+          ].map(
+            ({ count, icon, label, color }) =>
+              count > 0 && (
+                <div key={label} className={`flex items-center gap-2 ${color}`}>
+                  {icon}
+                  <span>
+                    {count} {label}
+                  </span>
+                </div>
+              )
           )}
         </div>
 
@@ -185,26 +197,48 @@ export function UploadLogDrawer() {
                 {uploadProgress.map((upload) => (
                   <div
                     key={upload.id}
-                    className="flex items-center gap-3 p-2 bg-gray-50 dark:bg-gray-700 rounded-lg text-sm"
+                    className="flex items-center gap-3 p-2 rounded-lg text-sm"
                   >
                     {/* Status Icon */}
                     <div className="flex-shrink-0">
-                      {upload.status === "queued" && (
-                        <div className="w-4 h-4 text-blue-600 dark:text-blue-400">
-                          <span className="text-xs">⏳</span>
-                        </div>
-                      )}
-                      {upload.status === "uploading" && (
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-black dark:border-black"></div>
-                      )}
-                      {upload.status === "completed" && (
-                        <CheckIcon className="w-4 h-4 text-green-600 dark:text-green-400" />
-                      )}
-                      {upload.status === "error" && (
-                        <XIcon className="w-4 h-4 text-red-600 dark:text-red-400" />
-                      )}
-                      {upload.status === "cancelled" && (
-                        <CancelIcon className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                      {[
+                        {
+                          status: "queued",
+                          icon: (
+                            <div className="w-4 h-4 text-blue-600 dark:text-blue-400">
+                              <span className="text-xs">⏳</span>
+                            </div>
+                          ),
+                        },
+                        {
+                          status: "uploading",
+                          icon: (
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-black dark:text-black"></div>
+                          ),
+                        },
+                        {
+                          status: "completed",
+                          icon: (
+                            <CheckIcon className="w-4 h-4 text-green-600 dark:text-green-400" />
+                          ),
+                        },
+                        {
+                          status: "error",
+                          icon: (
+                            <XIcon className="w-4 h-4 text-red-600 dark:text-red-400" />
+                          ),
+                        },
+                        {
+                          status: "cancelled",
+                          icon: (
+                            <CancelIcon className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                          ),
+                        },
+                      ].map(
+                        ({ status, icon }) =>
+                          upload.status === status && (
+                            <div key={status}>{icon}</div>
+                          )
                       )}
                     </div>
 
@@ -320,31 +354,33 @@ export function UploadLogDrawer() {
                     </button>
                   )}
 
-                  {completedCount > 0 && (
-                    <button
-                      onClick={clearCompleted}
-                      className="px-2 py-1 text-xs bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-300 dark:hover:bg-gray-500"
-                    >
-                      Clear Completed
-                    </button>
-                  )}
-
-                  {errorCount > 0 && (
-                    <button
-                      onClick={clearErrors}
-                      className="px-2 py-1 text-xs bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-300 dark:hover:bg-gray-500"
-                    >
-                      Clear Errors
-                    </button>
-                  )}
-
-                  {cancelledCount > 0 && (
-                    <button
-                      onClick={removeCancelled}
-                      className="px-2 py-1 text-xs bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-300 dark:hover:bg-gray-500"
-                    >
-                      Clear Cancelled
-                    </button>
+                  {[
+                    {
+                      count: completedCount,
+                      action: clearCompleted,
+                      label: "Clear Completed",
+                    },
+                    {
+                      count: errorCount,
+                      action: clearErrors,
+                      label: "Clear Errors",
+                    },
+                    {
+                      count: cancelledCount,
+                      action: removeCancelled,
+                      label: "Clear Cancelled",
+                    },
+                  ].map(
+                    ({ count, action, label }) =>
+                      count > 0 && (
+                        <button
+                          key={label}
+                          onClick={action}
+                          className="px-2 py-1 text-xs bg-gray-50 dark:bg-gray-900 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-300 dark:hover:bg-gray-500"
+                        >
+                          {label}
+                        </button>
+                      )
                   )}
                 </div>
               </div>

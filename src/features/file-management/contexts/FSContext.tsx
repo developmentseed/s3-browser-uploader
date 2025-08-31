@@ -230,15 +230,21 @@ export const FileSystemProvider: React.FC<FileSystemProviderProps> = ({
 
       setUploadProgress((prev) => [...prev, ...initialProgress]);
 
-      // Process uploads sequentially
-      for (const progress of initialProgress) {
+      // Process uploads concurrently with a sliding window approach
+      const maxConcurrent = preferences.concurrentFileUploads;
+      const queue = [...initialProgress];
+      const activeUploads = new Set<string>();
+      const uploadPromises: Promise<void>[] = [];
+
+      // Function to start a single upload
+      const startUpload = async (progress: UploadProgress): Promise<void> => {
         try {
           const currentProgress = uploadProgressRef.current.find(
             (up) => up.id === progress.id
           );
 
           if (currentProgress?.status === "cancelled") {
-            continue;
+            return;
           }
 
           setUploadProgress((prev) =>
@@ -309,10 +315,30 @@ export const FileSystemProvider: React.FC<FileSystemProviderProps> = ({
                 : up
             )
           );
+        } finally {
+          // Remove from active uploads when done (success or failure)
+          activeUploads.delete(progress.id);
+          
+          // Start the next upload from the queue if available
+          if (queue.length > 0) {
+            const nextProgress = queue.shift()!;
+            activeUploads.add(nextProgress.id);
+            uploadPromises.push(startUpload(nextProgress));
+          }
         }
-      }
+      };
+
+      // Start initial batch of uploads up to maxConcurrent
+      const initialBatch = queue.splice(0, maxConcurrent);
+      initialBatch.forEach((progress) => {
+        activeUploads.add(progress.id);
+        uploadPromises.push(startUpload(progress));
+      });
+
+      // Wait for all uploads to complete
+      await Promise.all(uploadPromises);
     },
-    [s3Bucket, s3Client, preferences.uploadQueueSize]
+    [s3Bucket, s3Client, preferences.uploadQueueSize, preferences.concurrentFileUploads]
   );
 
   const cancelUpload = useCallback((id: string) => {

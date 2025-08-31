@@ -70,6 +70,35 @@ export function PreferencesModal({ isOpen, onClose }: PreferencesModalProps) {
             </div>
           </div>
 
+          {/* Concurrent File Uploads */}
+          <div>
+            <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
+              Concurrent File Uploads
+            </label>
+            <div className="space-y-2">
+              <input
+                type="number"
+                min="1"
+                max="10"
+                value={preferences.concurrentFileUploads}
+                onChange={(e) => {
+                  const value = parseInt(e.target.value);
+                  if (value >= 1 && value <= 10) {
+                    updatePreferences({
+                      ...preferences,
+                      concurrentFileUploads: value,
+                    });
+                  }
+                }}
+                className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400 dark:focus:border-blue-400"
+                placeholder="Enter number of concurrent uploads"
+              />
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Number of files that can be uploaded simultaneously (1-10)
+              </p>
+            </div>
+          </div>
+
           {/* Date Format */}
           <div>
             <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">

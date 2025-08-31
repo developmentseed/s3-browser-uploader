@@ -10,6 +10,7 @@ import {
 
 export interface Preferences {
   uploadQueueSize: number;
+  concurrentFileUploads: number;
   dateFormat: "relative" | "absolute" | "iso8601";
 }
 
@@ -21,6 +22,7 @@ interface PreferencesContextType {
 
 const defaultPreferences: Preferences = {
   uploadQueueSize: 8,
+  concurrentFileUploads: 3,
   dateFormat: "relative",
 };
 
