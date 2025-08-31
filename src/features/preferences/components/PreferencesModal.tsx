@@ -1,7 +1,7 @@
 "use client";
 
-import { usePreferences } from "@/contexts/PreferencesContext";
-import { XIcon } from "@/graphics";
+import { usePreferences } from "@/features/preferences/contexts/PreferencesContext";
+import { XIcon } from "@/shared/components";
 
 interface PreferencesModalProps {
   isOpen: boolean;

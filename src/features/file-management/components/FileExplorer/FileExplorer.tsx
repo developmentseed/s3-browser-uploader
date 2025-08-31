@@ -2,13 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { useDropzone } from "react-dropzone";
-import { useAuth, useFileSystem } from "@/contexts";
-import { ActionButton } from "../ActionButton";
+import { useFileSystem } from "@/features/file-management/contexts/FSContext";
+import { ActionButton } from "@/shared/components/ActionButton";
 import { FileDisplay } from "./FileDisplay";
-import { PreferencesModal } from "../PreferencesModal";
-import { usePreferences } from "@/contexts/PreferencesContext";
+import { PreferencesModal } from "@/features/preferences/components/PreferencesModal";
 import Link from "next/link";
-import { UploadFilesIcon, RefreshIcon, CogIcon } from "@/graphics";
+import { UploadFilesIcon, RefreshIcon, CogIcon } from "@/shared/components";
 
 interface FSObject {
   key: string;
@@ -36,16 +35,14 @@ interface FileExplorerProps {
   prefix: string;
 }
 
-export default function FileExplorer({
+export function FileExplorer({
   className = "",
   disabled = false,
   prefix,
 }: FileExplorerProps) {
-  const { s3Credentials, s3Bucket } = useAuth();
   const {
     uploads: { uploadFiles, progress: uploadProgress },
   } = useFileSystem();
-  const { preferences } = usePreferences();
   const { listObjects, deleteObject } = useFileSystem();
 
   const [objects, setObjects] = useState<FSObject[]>([]);
@@ -104,10 +101,8 @@ export default function FileExplorer({
 
   // Fetch file system objects when credentials or prefix changes
   useEffect(() => {
-    if (s3Credentials && s3Bucket) {
-      fetchFileSystemObjects();
-    }
-  }, [s3Credentials, s3Bucket, prefix, listObjects]);
+    fetchFileSystemObjects();
+  }, [prefix, listObjects]);
 
   // Refresh file list when ALL uploads complete
   useEffect(() => {
@@ -129,8 +124,6 @@ export default function FileExplorer({
   }, [uploadProgress, listObjects]);
 
   const fetchFileSystemObjects = async () => {
-    if (!s3Credentials || !s3Bucket) return;
-
     setLoading(true);
     setError(null);
 
@@ -196,15 +189,6 @@ export default function FileExplorer({
     }
     return a.name.localeCompare(b.name);
   });
-
-  if (!s3Credentials || !s3Bucket) {
-    return (
-      <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-        Uh oh, something went wrong when fetching your credentials. Please try
-        again.
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-4" {...getRootProps()}>

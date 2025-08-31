@@ -1,17 +1,17 @@
 "use client";
 
-import { useFileSystem } from "@/contexts";
+import { useFileSystem } from "@/features/file-management/contexts/FSContext";
 import {
   CancelIcon,
   CheckIcon,
   XIcon,
   ChevronUpIcon,
   ChevronDownIcon,
-} from "@/graphics";
+} from "@/shared/components";
 import { formatFileSize } from "@/app/utils";
 import { useState, useRef, useCallback, useEffect } from "react";
 
-export default function UploadLogDrawer() {
+export function UploadLogDrawer() {
   const {
     uploads: {
       progress: uploadProgress,

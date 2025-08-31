@@ -15,11 +15,7 @@ export const FolderIcon = ({ className }: { className?: string }) => {
 
 export const FileIcon = ({ className }: { className?: string }) => {
   return (
-    <svg
-      className={className}
-      fill="currentColor"
-      viewBox="0 0 20 20"
-    >
+    <svg className={className} fill="currentColor" viewBox="0 0 20 20">
       <path
         fillRule="evenodd"
         d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"
@@ -31,11 +27,7 @@ export const FileIcon = ({ className }: { className?: string }) => {
 
 export const UploadIcon = ({ className }: { className?: string }) => {
   return (
-    <svg
-      className={className}
-      fill="currentColor"
-      viewBox="0 0 20 20"
-    >
+    <svg className={className} fill="currentColor" viewBox="0 0 20 20">
       <path
         fillRule="evenodd"
         d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z"
@@ -47,11 +39,7 @@ export const UploadIcon = ({ className }: { className?: string }) => {
 
 export const ErrorIcon = ({ className }: { className?: string }) => {
   return (
-    <svg
-      className={className}
-      fill="currentColor"
-      viewBox="0 0 24 24"
-    >
+    <svg className={className} fill="currentColor" viewBox="0 0 24 24">
       <path
         fillRule="evenodd"
         d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
@@ -76,6 +64,14 @@ export const RefreshIcon = ({ className }: { className?: string }) => {
         d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
       />
     </svg>
+  );
+};
+
+export const LoadingIcon = ({ className }: { className?: string }) => {
+  return (
+    <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-lg bg-gray-100 dark:bg-black">
+      <div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600 dark:border-gray-600 dark:border-t-gray-400"></div>
+    </div>
   );
 };
 

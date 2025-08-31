@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { STSClient, AssumeRoleCommand } from "@aws-sdk/client-sts";
-import { withOIDCAuth, createErrorResponse } from "@/lib/auth";
+import { withOIDCAuth, createErrorResponse } from "@/shared/lib/auth";
 
 // Configuration from environment variables
 const BUCKET_NAME = process.env.S3_BUCKET_NAME || "24hr-tmp";

@@ -15,8 +15,8 @@ import {
   DeleteObjectCommand,
 } from "@aws-sdk/client-s3";
 import { Upload } from "@aws-sdk/lib-storage";
-import { useAuth } from "./AuthContext";
-import { usePreferences } from "./PreferencesContext";
+import { useAuth } from "@/features/auth/contexts/AuthContext";
+import { usePreferences } from "@/features/preferences/contexts/PreferencesContext";
 
 // File System Types
 interface FSObject {

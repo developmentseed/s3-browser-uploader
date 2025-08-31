@@ -5,8 +5,8 @@ import {
   formatFileSize,
   formatDateWithPreference,
 } from "@/app/utils";
-import { useFileSystem } from "@/contexts";
-import { usePreferences } from "@/contexts/PreferencesContext";
+import { useFileSystem } from "@/features/file-management/contexts/FSContext";
+import { usePreferences } from "@/features/preferences/contexts/PreferencesContext";
 import type { FileItem } from "./FileExplorer";
 import {
   FolderIcon,
@@ -16,7 +16,7 @@ import {
   CancelIcon,
   RetryIcon,
   TrashIcon,
-} from "@/graphics";
+} from "@/shared/components";
 
 interface FileItemProps {
   item: FileItem;
