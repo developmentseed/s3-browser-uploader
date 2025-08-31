@@ -289,7 +289,7 @@ export function FileExplorer({
               </div>
             ) : unifiedFileList.length === 0 ? (
               <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                This directory is empty
+                No files found at this prefix
               </div>
             ) : (
               unifiedFileList.map((item) => (
