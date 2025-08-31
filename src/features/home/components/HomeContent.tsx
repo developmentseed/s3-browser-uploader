@@ -23,7 +23,7 @@ export function HomeContent() {
 
   // Always show the header, content below changes based on status
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-white dark:bg-black">
       <Header username={username} onSignOut={signIn} />
 
       {/* Content area - changes based on authentication status */}
