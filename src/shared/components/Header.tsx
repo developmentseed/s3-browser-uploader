@@ -12,7 +12,7 @@ export function Header({ username, onSignOut }: HeaderProps) {
         <div className="flex justify-between items-center">
           <div>
             <h1 className="font-geist text-xl font-semibold text-gray-900 dark:text-white">
-              S3 Browser Upload
+              S3 Workspace
             </h1>
           </div>
 

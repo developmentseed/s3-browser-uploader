@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "S3 Browser Upload",
+  title: "S3 Workspace",
   description: "Secure file upload to S3 with OIDC authentication",
 };
 
