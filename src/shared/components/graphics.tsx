@@ -69,7 +69,7 @@ export const RefreshIcon = ({ className }: { className?: string }) => {
 
 export const LoadingIcon = ({ className }: { className?: string }) => {
   return (
-    <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-lg bg-gray-100 dark:bg-black">
+    <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-lg">
       <div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600 dark:border-gray-600 dark:border-t-gray-400"></div>
     </div>
   );

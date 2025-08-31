@@ -7,7 +7,12 @@ import { ActionButton } from "@/shared/components/ActionButton";
 import { FileDisplay } from "./FileDisplay";
 import { PreferencesModal } from "@/features/preferences/components/PreferencesModal";
 import Link from "next/link";
-import { UploadFilesIcon, RefreshIcon, CogIcon } from "@/shared/components";
+import {
+  UploadFilesIcon,
+  RefreshIcon,
+  CogIcon,
+  LoadingIcon,
+} from "@/shared/components";
 
 interface FSObject {
   key: string;
@@ -279,8 +284,8 @@ export function FileExplorer({
           {/* File List */}
           <div className="space-y-0.5 font-mono">
             {loading ? (
-              <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                Loading...
+              <div className="flex h-32 items-center justify-center">
+                <LoadingIcon />
               </div>
             ) : unifiedFileList.length === 0 ? (
               <div className="text-center py-8 text-gray-500 dark:text-gray-400">

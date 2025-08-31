@@ -7,7 +7,7 @@ interface HeaderProps {
 
 export function Header({ username, onSignOut }: HeaderProps) {
   return (
-    <div className="bg-white dark:bg-black border-b border-gray-200 dark:border-gray-800">
+    <div className="border-b border-gray-200 dark:border-gray-800">
       <div className="mx-auto max-w-6xl px-6 py-4">
         <div className="flex justify-between items-center">
           <div>

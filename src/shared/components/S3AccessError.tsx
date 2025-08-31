@@ -14,25 +14,16 @@ export function S3AccessError({
   onSignOut,
 }: S3AccessErrorProps) {
   return (
-    <div className="flex-1 bg-white dark:bg-black flex flex-col justify-center">
+    <div className="fixed inset-0 flex flex-col justify-center z-50">
       {/* Error Display */}
-      <div className="mx-auto max-w-4xl px-6 py-8">
+      <div className="mx-auto max-w-4xl px-6 py-8 -mt-8">
         <div className="text-center">
           <h2 className="mb-3 font-geist text-3xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-4xl">
             Unable to get fileserver credentials
           </h2>
           <p className="mb-6 text-lg text-gray-600 dark:text-gray-400">
-            There was an error fetching your S3 credentials. This could be due
-            to:
+            There was an error fetching your S3 credentials.
           </p>
-          <div className="mb-8 text-left max-w-2xl mx-auto space-y-2 text-sm text-gray-600 dark:text-gray-400">
-            <ul className="list-disc list-inside space-y-1">
-              <li>Expired authentication token</li>
-              <li>Insufficient permissions to access S3</li>
-              <li>Temporary AWS service issues</li>
-              <li>Network connectivity problems</li>
-            </ul>
-          </div>
           <div className="mb-4 mt-2 p-2 bg-gray-100 dark:bg-gray-800 rounded text-left text-xs text-gray-500 dark:text-gray-400">
             <p className="text-red-800 dark:text-red-200 font-mono text-sm">
               {error}

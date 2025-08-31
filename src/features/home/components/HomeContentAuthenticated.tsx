@@ -61,7 +61,7 @@ export function HomeContentAuthenticated({
 
   // Show main content when credentials are available
   return (
-    <div className="bg-white dark:bg-black flex-1">
+    <div className="flex-1">
       <div className="mx-auto max-w-6xl px-6">
         {s3Credentials && s3Bucket && (
           <>

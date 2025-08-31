@@ -110,6 +110,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Helper function to provide user-friendly error messages
   const getFriendlyErrorMessage = (error: string): string => {
+    console.log("Error:", error);
     if (error.includes("JWTExpired") || error.includes("expired")) {
       return "Your login session has expired. Please sign out and sign in again.";
     }
