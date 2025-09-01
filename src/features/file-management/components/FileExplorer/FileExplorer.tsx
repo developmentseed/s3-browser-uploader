@@ -196,10 +196,10 @@ export function FileExplorer({
   });
 
   return (
-    <div className="space-y-4" {...getRootProps()}>
+    <div className="min-h-screen space-y-4" {...getRootProps()}>
       {/* File System Explorer - shown when not disabled */}
       {!disabled && (
-        <div className={`space-y-4 ${className} relative`}>
+        <div className="space-y-4">
           {/* Drag and Drop Overlay */}
           {isDragActive && (
             <div
@@ -222,7 +222,7 @@ export function FileExplorer({
           )}
 
           {/* Breadcrumb Navigation and Buttons */}
-          <div className="flex items-center justify-between p-2">
+          <div className="mx-auto max-w-6xl w-full flex items-center justify-between py-2 flex-shrink-0 border-b border-gray-200 dark:border-gray-700">
             {/* Breadcrumb Navigation */}
             <div className="flex font-mono items-center gap-1 text-sm text-gray-600 dark:text-gray-400">
               {prefix
