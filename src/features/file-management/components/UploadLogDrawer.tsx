@@ -192,6 +192,28 @@ export function UploadLogDrawer() {
             style={{ height: `${drawerHeight}vh` }}
           >
             <div className="p-3">
+              {/* Upload Log Header */}
+              <div className="mb-3 p-2 bg-gray-100 dark:bg-gray-900 rounded-lg">
+                <div className="flex items-center justify-between text-sm">
+                  <div className="flex items-center gap-4">
+                    <span className="text-gray-700 dark:text-gray-300">
+                      Concurrent Uploads: {uploadingCount}/5
+                    </span>
+                    {queuedCount > 0 && (
+                      <span className="text-blue-600 dark:text-blue-400">
+                        {queuedCount} in queue
+                      </span>
+                    )}
+                    <span className="text-gray-500 dark:text-gray-400">
+                      Total: {uploadProgress.length} files
+                    </span>
+                  </div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">
+                    Queue: 8 chunks, Size: 5MB
+                  </div>
+                </div>
+              </div>
+
               {/* Upload Log */}
               <div className="space-y-2">
                 {uploadProgress.map((upload) => (

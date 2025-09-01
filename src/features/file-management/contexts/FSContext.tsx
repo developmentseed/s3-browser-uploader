@@ -253,7 +253,7 @@ export const FileSystemProvider: React.FC<FileSystemProviderProps> = ({
             )
           );
 
-          const chunkSize = 1024 * 1024 * 5;
+          const chunkSize = preferences.chunkSizeMB * 1024 * 1024; // Convert MB to bytes
           const isLargeFile = progress.file.size > chunkSize;
 
           const upload = new Upload({
@@ -265,8 +265,8 @@ export const FileSystemProvider: React.FC<FileSystemProviderProps> = ({
               ContentType: progress.file.type || "application/octet-stream",
               ...(isLargeFile && { ChecksumAlgorithm: "CRC32" }),
             },
-            queueSize: preferences.uploadQueueSize,
-            partSize: isLargeFile ? chunkSize : undefined,
+            queueSize: preferences.concurrentChunkUploads,
+            partSize: chunkSize,
             leavePartsOnError: false,
           });
 
@@ -338,7 +338,7 @@ export const FileSystemProvider: React.FC<FileSystemProviderProps> = ({
       // Wait for all uploads to complete
       await Promise.all(uploadPromises);
     },
-    [s3Bucket, s3Client, preferences.uploadQueueSize, preferences.concurrentFileUploads]
+    [s3Bucket, s3Client, preferences.concurrentChunkUploads, preferences.concurrentFileUploads, preferences.chunkSizeMB]
   );
 
   const cancelUpload = useCallback((id: string) => {

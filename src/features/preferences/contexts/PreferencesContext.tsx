@@ -9,8 +9,9 @@ import {
 } from "react";
 
 export interface Preferences {
-  uploadQueueSize: number;
   concurrentFileUploads: number;
+  concurrentChunkUploads: number;
+  chunkSizeMB: number;
   dateFormat: "relative" | "absolute" | "iso8601";
 }
 
@@ -21,8 +22,9 @@ interface PreferencesContextType {
 }
 
 const defaultPreferences: Preferences = {
-  uploadQueueSize: 8,
   concurrentFileUploads: 3,
+  concurrentChunkUploads: 4,
+  chunkSizeMB: 10,
   dateFormat: "relative",
 };
 

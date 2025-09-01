@@ -40,37 +40,7 @@ export function PreferencesModal({ isOpen, onClose }: PreferencesModalProps) {
           </button>
         </div>
 
-        {/* Content */}
         <div className="p-4 space-y-4">
-          {/* Upload Queue Size */}
-          <div>
-            <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
-              Upload Queue Size
-            </label>
-            <div className="space-y-2">
-              <input
-                type="number"
-                min="1"
-                value={preferences.uploadQueueSize}
-                onChange={(e) => {
-                  const value = parseInt(e.target.value);
-                  if (value >= 1) {
-                    updatePreferences({
-                      ...preferences,
-                      uploadQueueSize: value,
-                    });
-                  }
-                }}
-                className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400 dark:focus:border-blue-400"
-                placeholder="Enter queue size"
-              />
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                Number of file chunks that can be uploaded simultaneously
-              </p>
-            </div>
-          </div>
-
-          {/* Concurrent File Uploads */}
           <div>
             <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
               Concurrent File Uploads
@@ -99,7 +69,63 @@ export function PreferencesModal({ isOpen, onClose }: PreferencesModalProps) {
             </div>
           </div>
 
-          {/* Date Format */}
+          <div>
+            <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
+              Concurrent Chunk Uploads
+            </label>
+            <div className="space-y-2">
+              <input
+                type="number"
+                min="1"
+                value={preferences.concurrentChunkUploads}
+                onChange={(e) => {
+                  const value = parseInt(e.target.value);
+                  if (value >= 1) {
+                    updatePreferences({
+                      ...preferences,
+                      concurrentChunkUploads: value,
+                    });
+                  }
+                }}
+                className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400 dark:focus:border-blue-400"
+                placeholder="Enter chunk upload limit"
+              />
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Number of file chunks that can be uploaded simultaneously per
+                file
+              </p>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
+              Chunk Size (MB)
+            </label>
+            <div className="space-y-2">
+              <input
+                type="number"
+                min="5"
+                max="100"
+                value={preferences.chunkSizeMB}
+                onChange={(e) => {
+                  const value = parseInt(e.target.value);
+                  if (value >= 5 && value <= 100) {
+                    updatePreferences({
+                      ...preferences,
+                      chunkSizeMB: value,
+                    });
+                  }
+                }}
+                className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400 dark:focus:border-blue-400"
+                placeholder="Enter chunk size in MB"
+              />
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Size of each multipart upload chunk (5-100 MB). AWS S3 requires
+                minimum 5MB chunks.
+              </p>
+            </div>
+          </div>
+
           <div>
             <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
               Date Display Format
