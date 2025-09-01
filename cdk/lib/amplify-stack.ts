@@ -100,7 +100,7 @@ export class AmplifyNextAppStack extends cdk.Stack {
     });
 
     const s3AccessRole = new iam.Role(this, "S3AccessRole", {
-      assumedBy: new iam.ServicePrincipal("lambda.amazonaws.com"),
+      assumedBy: new iam.AccountPrincipal(cdk.Stack.of(this).account),
     });
     uploadBucket.grantReadWrite(s3AccessRole);
 
@@ -168,6 +168,13 @@ export class AmplifyNextAppStack extends cdk.Stack {
     }
 
     s3AccessRole.grantAssumeRole(amplifyApp.computeRole!);
+    amplifyApp.computeRole!.addToPrincipalPolicy(
+      new iam.PolicyStatement({
+        effect: iam.Effect.ALLOW,
+        actions: ["sts:AssumeRole"],
+        resources: [s3AccessRole.roleArn],
+      })
+    );
 
     // Add branch with environment variables
     const branch = amplifyApp.addBranch(branchName, {
