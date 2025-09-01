@@ -13,7 +13,9 @@ import {
   S3Client,
   ListObjectsV2Command,
   DeleteObjectCommand,
+  GetObjectCommand,
 } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { Upload } from "@aws-sdk/lib-storage";
 import { useAuth } from "@/features/auth/contexts/AuthContext";
 import { usePreferences } from "@/features/preferences/contexts/PreferencesContext";
@@ -44,6 +46,7 @@ interface FileSystemContextType {
   // File System Operations
   listObjects: (prefix: string) => Promise<FSObject[]>;
   deleteObject: (key: string) => Promise<void>;
+  downloadFile: (key: string) => Promise<string>;
 
   // Upload Operations - grouped into a single object
   uploads: {
@@ -208,6 +211,31 @@ export const FileSystemProvider: React.FC<FileSystemProviderProps> = ({
     [s3Client, s3Bucket]
   );
 
+  const downloadFile = useCallback(
+    async (key: string): Promise<string> => {
+      if (!s3Client) {
+        throw new Error("File system client not available");
+      }
+
+      try {
+        const command = new GetObjectCommand({
+          Bucket: s3Bucket!,
+          Key: key,
+        });
+
+        const signedUrl = await getSignedUrl(s3Client, command, {
+          expiresIn: 3600, // 1 hour
+        });
+
+        return signedUrl;
+      } catch (error) {
+        console.error("Error generating download URL:", error);
+        throw new Error("Failed to generate download URL");
+      }
+    },
+    [s3Client, s3Bucket]
+  );
+
   // Upload Operations
   const uploadFiles = useCallback(
     async (files: File[], prefix: string) => {
@@ -318,7 +346,7 @@ export const FileSystemProvider: React.FC<FileSystemProviderProps> = ({
         } finally {
           // Remove from active uploads when done (success or failure)
           activeUploads.delete(progress.id);
-          
+
           // Start the next upload from the queue if available
           if (queue.length > 0) {
             const nextProgress = queue.shift()!;
@@ -338,7 +366,13 @@ export const FileSystemProvider: React.FC<FileSystemProviderProps> = ({
       // Wait for all uploads to complete
       await Promise.all(uploadPromises);
     },
-    [s3Bucket, s3Client, preferences.concurrentChunkUploads, preferences.concurrentFileUploads, preferences.chunkSizeMB]
+    [
+      s3Bucket,
+      s3Client,
+      preferences.concurrentChunkUploads,
+      preferences.concurrentFileUploads,
+      preferences.chunkSizeMB,
+    ]
   );
 
   const cancelUpload = useCallback((id: string) => {
@@ -401,6 +435,7 @@ export const FileSystemProvider: React.FC<FileSystemProviderProps> = ({
     // File System Operations
     listObjects,
     deleteObject,
+    downloadFile,
 
     // Upload Operations - grouped into a single object
     uploads: {

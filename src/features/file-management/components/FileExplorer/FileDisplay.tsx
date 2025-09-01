@@ -16,6 +16,7 @@ import {
   CancelIcon,
   RetryIcon,
   TrashIcon,
+  DownloadIcon,
 } from "@/shared/components";
 
 interface FileItemProps {
@@ -61,8 +62,27 @@ const FileItem = ({
 }) => {
   const {
     uploads: { cancelUpload, retryUpload },
+    downloadFile,
   } = useFileSystem();
   const { preferences } = usePreferences();
+
+  const handleDownload = async () => {
+    try {
+      const downloadUrl = await downloadFile(item.key);
+
+      // Create a temporary link element and trigger download
+      const link = document.createElement("a");
+      link.href = downloadUrl;
+      link.download = item.name;
+      link.target = "_blank";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error("Error downloading file:", error);
+      alert("Failed to download file. Please try again.");
+    }
+  };
 
   return (
     <div
@@ -159,16 +179,28 @@ const FileItem = ({
         </div>
       )}
 
-      {/* Delete button for non-upload files and completed uploads */}
-      {(!item.isUpload || item.uploadStatus === "completed") && onDelete && (
+      {/* Action buttons for non-upload files and completed uploads */}
+      {(!item.isUpload || item.uploadStatus === "completed") && (
         <div className="flex-shrink-0 flex items-center gap-1">
+          {/* Download button */}
           <button
-            onClick={onDelete}
-            className="p-1 rounded hover:bg-red-100 dark:hover:bg-red-900/20 transition-colors"
-            title="Delete file"
+            onClick={handleDownload}
+            className="p-1 rounded hover:bg-green-100 dark:hover:bg-green-900/20 transition-colors cursor-pointer"
+            title="Download file"
           >
-            <TrashIcon className="w-4 h-4 hover:text-red-600 hover:dark:text-red-400" />
+            <DownloadIcon className="w-4 h-4 text-gray-600 dark:text-gray-400 hover:text-green-600 hover:dark:text-green-400" />
           </button>
+
+          {/* Delete button */}
+          {onDelete && (
+            <button
+              onClick={onDelete}
+              className="p-1 rounded hover:bg-red-100 dark:hover:bg-red-900/20 transition-colors cursor-pointer"
+              title="Delete file"
+            >
+              <TrashIcon className="w-4 h-4 text-gray-600 dark:text-gray-400 hover:text-red-600 hover:dark:text-red-400" />
+            </button>
+          )}
         </div>
       )}
 

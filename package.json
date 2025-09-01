@@ -11,6 +11,7 @@
     "@aws-sdk/client-s3": "^3.876.0",
     "@aws-sdk/client-sts": "^3.876.0",
     "@aws-sdk/lib-storage": "^3.876.0",
+    "@aws-sdk/s3-request-presigner": "^3.879.0",
     "@types/jsonwebtoken": "^9.0.10",
     "jose": "^6.1.0",
     "jsonwebtoken": "^9.0.2",
