@@ -74,15 +74,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     setS3CredentialsLoading(true);
-    setS3CredentialsError(null); // Clear any existing errors
+    setS3CredentialsError(null);
     setS3Credentials(null);
     setS3Bucket(null);
 
     try {
       const response = await fetch("/api/sts", {
         method: "POST",
+        credentials: "include",
         headers: {
-          Authorization: `Bearer ${session.accessToken}`,
           "Content-Type": "application/json",
         },
       });
@@ -157,7 +157,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     session?.accessToken,
     s3Credentials,
     s3CredentialsLoading,
-    s3CredentialsError, // Add error to dependencies
+    s3CredentialsError,
   ]);
 
   const value: AuthContextType = {
