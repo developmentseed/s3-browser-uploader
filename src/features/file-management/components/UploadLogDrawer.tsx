@@ -105,10 +105,10 @@ export function UploadLogDrawer() {
             {
               count: uploadingCount,
               icon: (
-                <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-black dark:text-black"></div>
+                <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-black dark:border-white"></div>
               ),
               label: "uploading",
-              color: "text-black dark:text-black",
+              color: "text-black dark:text-white",
             },
             {
               count: queuedCount,
