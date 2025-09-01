@@ -159,8 +159,8 @@ const FileItem = ({
         </div>
       )}
 
-      {/* Delete button for non-upload files */}
-      {!item.isUpload && onDelete && (
+      {/* Delete button for non-upload files and completed uploads */}
+      {(!item.isUpload || item.uploadStatus === "completed") && onDelete && (
         <div className="flex-shrink-0 flex items-center gap-1">
           <button
             onClick={onDelete}
