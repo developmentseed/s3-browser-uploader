@@ -68,8 +68,10 @@ export class AmplifyNextAppStack extends cdk.Stack {
     super(scope, id, props);
 
     const branchName = props.branchName || "main";
-    const s3BucketName =
-      props.s3BucketName || `${cdk.Stack.of(this).stackName}-file-uploads`;
+    const region = cdk.Stack.of(this).region;
+    const account = cdk.Stack.of(this).account;
+    const stackName = cdk.Stack.of(this).stackName;
+    const s3BucketName = props.s3BucketName || `${stackName}-file-uploads`;
 
     // Create S3 bucket for file uploads
     const uploadBucket = new s3.Bucket(this, "UploadBucket", {
@@ -100,7 +102,7 @@ export class AmplifyNextAppStack extends cdk.Stack {
     });
 
     const s3AccessRole = new iam.Role(this, "S3AccessRole", {
-      assumedBy: new iam.AccountPrincipal(cdk.Stack.of(this).account),
+      assumedBy: new iam.AccountPrincipal(account),
     });
     uploadBucket.grantReadWrite(s3AccessRole);
 
@@ -176,6 +178,24 @@ export class AmplifyNextAppStack extends cdk.Stack {
       })
     );
 
+    // Add CloudWatch logs permissions for compute role
+    amplifyApp.computeRole!.addToPrincipalPolicy(
+      new iam.PolicyStatement({
+        effect: iam.Effect.ALLOW,
+        actions: [
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents",
+          "logs:DescribeLogGroups",
+          "logs:DescribeLogStreams",
+        ],
+        resources: [
+          `arn:aws:logs:${region}:${account}:log-group:/aws/amplify/*`,
+          `arn:aws:logs:${region}:${account}:log-group:/aws/amplify/*:*`,
+        ],
+      })
+    );
+
     // Add branch with environment variables
     const branch = amplifyApp.addBranch(branchName, {
       environmentVariables: {
@@ -198,6 +218,11 @@ export class AmplifyNextAppStack extends cdk.Stack {
     new cdk.CfnOutput(this, "S3BucketName", {
       value: uploadBucket.bucketName,
       description: "S3 Bucket for file uploads",
+    });
+
+    new cdk.CfnOutput(this, "CloudWatchLogGroup", {
+      value: `/aws/amplify/${amplifyApp.appId}`,
+      description: "CloudWatch Log Group for Amplify compute logs",
     });
   }
 }
