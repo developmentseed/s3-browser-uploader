@@ -15,7 +15,7 @@ export function HomeContent() {
   // Handle redirect to login if not authenticated
   useEffect(() => {
     if (status === "unauthenticated" && !user) {
-      signIn();
+      signIn("oidc");
     }
   }, [status, user]);
 
