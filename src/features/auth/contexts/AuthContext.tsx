@@ -87,6 +87,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         },
       });
 
+      if (!response.ok)
+        throw new Error(
+          `Failed to fetch S3 credentials, got status ${
+            response.status
+          }, body: ${await response.text()}`
+        );
+
       const data: ApiResponse = await response.json();
 
       if (data.success && data.credentials) {
