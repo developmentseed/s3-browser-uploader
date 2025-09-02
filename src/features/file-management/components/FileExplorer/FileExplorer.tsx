@@ -14,12 +14,8 @@ import {
   LoadingIcon,
 } from "@/shared/components";
 
-interface FSObject {
-  key: string;
-  lastModified: string;
-  size: number;
-  isDirectory: boolean;
-}
+// Import FSObject type from FSContext
+import type { FSObject } from "@/features/file-management/contexts/FSContext";
 
 export interface FileItem {
   key: string;
@@ -32,6 +28,9 @@ export interface FileItem {
   uploadProgress?: number;
   uploadError?: string;
   uploadId?: string;
+  contentType?: string;
+  etag?: string;
+  checksumAlgorithm?: string;
 }
 
 interface FileExplorerProps {
@@ -160,6 +159,9 @@ export function FileExplorer({
           size: obj.size,
           isDirectory: obj.isDirectory,
           isUpload: false,
+          contentType: obj.contentType,
+          etag: obj.etag,
+          checksumAlgorithm: obj.checksumAlgorithm,
         },
       ]),
       // Uploads in Prefix (possibly overwriting existing file system objects)

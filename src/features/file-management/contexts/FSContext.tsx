@@ -14,6 +14,7 @@ import {
   ListObjectsV2Command,
   DeleteObjectCommand,
   GetObjectCommand,
+  HeadObjectCommand,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { Upload } from "@aws-sdk/lib-storage";
@@ -21,11 +22,14 @@ import { useAuth } from "@/features/auth/contexts/AuthContext";
 import { usePreferences } from "@/features/preferences/contexts/PreferencesContext";
 
 // File System Types
-interface FSObject {
+export interface FSObject {
   key: string; // Full S3 key (with prefix)
   lastModified: string;
   size: number;
   isDirectory: boolean;
+  contentType?: string;
+  etag?: string;
+  checksumAlgorithm?: string;
 }
 
 // Upload Types
@@ -47,6 +51,14 @@ interface FileSystemContextType {
   listObjects: (prefix: string) => Promise<FSObject[]>;
   deleteObject: (key: string) => Promise<void>;
   downloadFile: (key: string) => Promise<string>;
+  getObjectMetadata: (key: string) => Promise<{
+    contentType?: string;
+    etag?: string;
+    checksumAlgorithm?: string;
+    checksumCRC32?: string;
+    checksumSHA1?: string;
+    checksumSHA256?: string;
+  }>;
 
   // Upload Operations - grouped into a single object
   uploads: {
@@ -166,6 +178,9 @@ export const FileSystemProvider: React.FC<FileSystemProviderProps> = ({
                   new Date().toISOString(),
                 size: content.Size || 0,
                 isDirectory: false,
+                contentType: (content as any).ContentType,
+                etag: content.ETag,
+                checksumAlgorithm: content.ChecksumAlgorithm?.[0],
               });
             }
           });
@@ -231,6 +246,43 @@ export const FileSystemProvider: React.FC<FileSystemProviderProps> = ({
       } catch (error) {
         console.error("Error generating download URL:", error);
         throw new Error("Failed to generate download URL");
+      }
+    },
+    [s3Client, s3Bucket]
+  );
+
+  const getObjectMetadata = useCallback(
+    async (key: string): Promise<{
+      contentType?: string;
+      etag?: string;
+      checksumAlgorithm?: string;
+      checksumCRC32?: string;
+      checksumSHA1?: string;
+      checksumSHA256?: string;
+    }> => {
+      if (!s3Client) {
+        throw new Error("File system client not available");
+      }
+
+      try {
+        const command = new HeadObjectCommand({
+          Bucket: s3Bucket!,
+          Key: key,
+        });
+
+        const response = await s3Client.send(command);
+        
+        return {
+          contentType: response.ContentType,
+          etag: response.ETag,
+          checksumAlgorithm: (response as any).ChecksumAlgorithm?.[0],
+          checksumCRC32: (response as any).ChecksumCRC32,
+          checksumSHA1: (response as any).ChecksumSHA1,
+          checksumSHA256: (response as any).ChecksumSHA256,
+        };
+      } catch (error) {
+        console.error("Error getting object metadata:", error);
+        return {};
       }
     },
     [s3Client, s3Bucket]
@@ -436,6 +488,7 @@ export const FileSystemProvider: React.FC<FileSystemProviderProps> = ({
     listObjects,
     deleteObject,
     downloadFile,
+    getObjectMetadata,
 
     // Upload Operations - grouped into a single object
     uploads: {
