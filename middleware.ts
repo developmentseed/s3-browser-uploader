@@ -6,12 +6,12 @@ export default withAuth(
   },
   {
     callbacks: {
-      authorized: ({ token }) => !!token,
+      authorized: ({ token }) => !!token?.sub,
     },
   }
 );
 
 export const config = {
   // Protect the API routes
-  matcher: ["/api/sts/:path*", "/api/s3/:path*"],
+  matcher: ["/api/sts"],
 };
