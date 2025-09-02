@@ -4,6 +4,7 @@ import * as amplify from "@aws-cdk/aws-amplify-alpha";
 import * as codebuild from "aws-cdk-lib/aws-codebuild";
 import * as iam from "aws-cdk-lib/aws-iam";
 import * as s3 from "aws-cdk-lib/aws-s3";
+import * as logs from "aws-cdk-lib/aws-logs";
 import * as secretsmanager from "aws-cdk-lib/aws-secretsmanager";
 
 export interface AmplifyNextAppStackProps extends cdk.StackProps {
@@ -179,6 +180,9 @@ export class AmplifyNextAppStack extends cdk.Stack {
     );
 
     // Add CloudWatch logs permissions for compute role
+    const logGroup = new logs.LogGroup(this, "AmplifyLogGroup", {
+      logGroupName: `/aws/amplify/${amplifyApp.appId}`,
+    });
     amplifyApp.computeRole!.addToPrincipalPolicy(
       new iam.PolicyStatement({
         effect: iam.Effect.ALLOW,
@@ -189,10 +193,7 @@ export class AmplifyNextAppStack extends cdk.Stack {
           "logs:DescribeLogGroups",
           "logs:DescribeLogStreams",
         ],
-        resources: [
-          `arn:aws:logs:${region}:${account}:log-group:/aws/amplify/*`,
-          `arn:aws:logs:${region}:${account}:log-group:/aws/amplify/*:*`,
-        ],
+        resources: [logGroup.logGroupArn, `${logGroup.logGroupArn}:*`],
       })
     );
 
