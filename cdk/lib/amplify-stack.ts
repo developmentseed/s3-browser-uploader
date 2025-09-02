@@ -180,8 +180,10 @@ export class AmplifyNextAppStack extends cdk.Stack {
     );
 
     // Add CloudWatch logs permissions for compute role
+    // NOTE: This is a workaround to avoid the issue where the log group is not created automatically
     const logGroup = new logs.LogGroup(this, "AmplifyLogGroup", {
       logGroupName: `/aws/amplify/${amplifyApp.appId}`,
+      retention: logs.RetentionDays.THREE_MONTHS,
     });
     amplifyApp.computeRole!.addToPrincipalPolicy(
       new iam.PolicyStatement({
