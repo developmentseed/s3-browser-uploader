@@ -6,12 +6,14 @@ import { useFileSystem } from "@/features/file-management/contexts/FSContext";
 import { ActionButton } from "@/shared/components/ActionButton";
 import { FileDisplay } from "./FileDisplay";
 import { PreferencesModal } from "@/features/preferences/components/PreferencesModal";
+import { PrefixNavigationModal } from "../PrefixNavigationModal";
 import Link from "next/link";
 import {
   UploadFilesIcon,
   RefreshIcon,
   CogIcon,
   LoadingIcon,
+  FolderArrowIcon,
 } from "@/shared/components";
 
 interface FSObject {
@@ -54,6 +56,7 @@ export function FileExplorer({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isPreferencesOpen, setIsPreferencesOpen] = useState(false);
+  const [isPrefixNavigationOpen, setIsPrefixNavigationOpen] = useState(false);
 
   // Function to remove an item from the local state
   const removeItemFromState = (keyToRemove: string) => {
@@ -255,14 +258,24 @@ export function FileExplorer({
                 onClick={fetchFileSystemObjects}
                 loading={loading}
                 icon={<RefreshIcon className="w-4 h-4" />}
+                title="Refresh file list"
               >
                 Refresh
+              </ActionButton>
+
+              <ActionButton
+                onClick={() => setIsPrefixNavigationOpen(true)}
+                icon={<FolderArrowIcon className="w-4 h-4" />}
+                title="Navigate to prefix"
+              >
+                Go to Prefix
               </ActionButton>
 
               <ActionButton
                 onClick={open}
                 disabled={disabled}
                 icon={<UploadFilesIcon className="w-4 h-4" />}
+                title="Select files to upload"
               >
                 Upload Files
               </ActionButton>
@@ -270,6 +283,7 @@ export function FileExplorer({
               <ActionButton
                 onClick={() => setIsPreferencesOpen(true)}
                 icon={<CogIcon className="w-4 h-4" />}
+                title="Open preferences"
               />
             </div>
           </div>
@@ -311,6 +325,14 @@ export function FileExplorer({
       <PreferencesModal
         isOpen={isPreferencesOpen}
         onClose={() => setIsPreferencesOpen(false)}
+      />
+
+      {/* Prefix Navigation Modal */}
+      <PrefixNavigationModal
+        isOpen={isPrefixNavigationOpen}
+        onClose={() => setIsPrefixNavigationOpen(false)}
+        currentPrefix={prefix}
+        userPrefix={prefix.split("/")[0] || ""}
       />
     </div>
   );

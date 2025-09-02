@@ -7,6 +7,7 @@ export function ActionButton({
   icon,
   children,
   variant = "default",
+  title,
 }: ActionButtonProps) {
   const baseClasses =
     "flex items-center gap-2 px-2.5 py-1.5 text-xs font-medium rounded-md transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed";
@@ -23,6 +24,7 @@ export function ActionButton({
       onClick={onClick}
       disabled={disabled || loading}
       className={`${baseClasses} ${variantClasses[variant]}`}
+      title={title}
     >
       <div className="w-3.5 h-3.5">
         {loading ? (
@@ -43,4 +45,5 @@ interface ActionButtonProps {
   icon: React.ReactNode;
   children?: React.ReactNode;
   variant?: "default" | "danger";
+  title?: string;
 }
